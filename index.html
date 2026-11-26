@@ -215,18 +215,6 @@
       color: var(--ochre);
     }
 
-    .asset-badge {
-      background: #141615;
-      color: #8fd6a5;
-      border-radius: 2px;
-      padding: 1px 5px;
-      font-size: 0.72rem;
-    }
-
-    .asset-badge.partial {
-      color: var(--ochre);
-    }
-
     /* ============================================================
        TOAST NOTIFICATIONS
        ============================================================ */
@@ -718,94 +706,67 @@
       background: #333834;
     }
 
-    /* Asset Manager Modal */
-    #drop-zone {
-      border: 2px dashed var(--ochre-dim);
-      background: rgba(16, 19, 17, 0.85);
-      border-radius: 4px;
-      padding: 18px;
-      text-align: center;
-      margin-bottom: 14px;
-      transition: all 0.18s ease;
-    }
-
-    #drop-zone.dragover {
-      border-color: #72e0cc;
-      background: rgba(25, 52, 46, 0.75);
-    }
-
-    .asset-toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-      padding: 10px 12px;
-      background: #181a19;
-      border: 1px solid #3c403c;
-      border-radius: 3px;
-      font-size: 0.82rem;
-    }
-
-    .asset-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-      gap: 10px;
-    }
-
-    .asset-slot-card {
-      background: #191b1a;
-      border: 2px solid var(--ink);
-      box-shadow: 0 0 0 1px #444842;
-      border-radius: 3px;
-      padding: 8px;
-      display: flex;
+    /* Automatic Loading Screen */
+    #loading-screen {
+      background: radial-gradient(circle at center, #141916 0%, #050605 85%);
       flex-direction: column;
-      gap: 6px;
-      cursor: pointer;
-      transition: border-color 0.14s ease, transform 0.14s ease;
+      text-align: center;
+      transition: opacity 0.45s ease;
     }
 
-    .asset-slot-card:hover {
-      box-shadow: 0 0 0 1.5px var(--ochre);
-      transform: translateY(-1px);
+    #loading-screen.fading-out {
+      opacity: 0;
+      pointer-events: none;
     }
 
-    .asset-slot-card.loaded {
-      box-shadow: 0 0 0 1.5px #5ea873;
+    .loading-box {
+      width: min(88vw, 440px);
+      background: rgba(20, 22, 21, 0.94);
+      border: 3px solid var(--ink);
+      outline: 2px solid #595d56;
+      outline-offset: -6px;
+      padding: 26px 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95);
     }
 
-    .asset-thumb {
+    .loading-title {
+      font-family: 'Special Elite', monospace;
+      font-size: 1.55rem;
+      letter-spacing: 4px;
+      color: var(--ochre);
+      margin: 0 0 14px 0;
+      text-shadow: 2px 2px 0 #070807;
+    }
+
+    .loading-bar-track {
       width: 100%;
-      height: 82px;
-      background: repeating-conic-gradient(#1f2220 0% 25%, #161817 0% 50%) 50% / 14px 14px;
-      border: 1px solid #323633;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      height: 16px;
+      background: #0c0e0d;
+      border: 2px solid var(--ink);
+      box-shadow: 0 0 0 1px #4f544d;
       overflow: hidden;
-      font-size: 0.7rem;
-      color: #777a74;
+      margin-bottom: 10px;
     }
 
-    .asset-thumb img, .asset-thumb canvas {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
+    #loading-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #7a1d22 0%, #c22e35 65%, #e3c44b 100%);
+      transition: width 0.18s ease-out;
     }
 
-    .asset-slot-name {
-      font-size: 0.75rem;
-      font-weight: 700;
+    .loading-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
       color: var(--paper);
-      line-height: 1.2;
+      gap: 10px;
     }
 
-    .asset-slot-file {
-      font-size: 0.65rem;
-      color: var(--muted);
-      word-break: break-all;
+    #loading-percent {
+      color: var(--ochre);
+      font-weight: 700;
     }
 
     /* Polaroid Modal */
@@ -983,10 +944,15 @@
         </div>
         <button id="btn-inv-toggle" class="ink-btn" title="Mở/Đóng Túi Đồ [I]">🎒 Túi [I]</button>
         <button id="btn-notebook" class="ink-btn" title="Sổ Tay Manh Mối">📓 Sổ</button>
-        <button id="btn-assets" class="ink-btn highlight" title="Quản lý & Nạp 15 Ảnh Assets [M]">
-          🖼️ NẠP ASSETS [M] <span id="asset-count-badge" class="asset-badge partial">0/15</span>
-        </button>
         <button id="btn-mute" class="ink-btn" title="Bật/Tắt Âm Thanh">🔊</button>
+      </div>
+
+      <!-- TOASTS -->
+      <div id="toast-container"></div>
+
+      <!-- CONTROLS HINT -->
+      <div id="controls-strip">
+        Đi: <b>A/D</b> hoặc <b>←/→</b> &nbsp;|&nbsp; Tương tác: <b>E / Click</b> &nbsp;|&nbsp; Kính Nứt: <b>V / Chuột phải</b> &nbsp;|&nbsp; Chụp: <b>Space / Click</b> &nbsp;|&nbsp; Túi: <b>I</b>
       </div>
 
       <!-- TOASTS -->
@@ -1042,49 +1008,25 @@
     <h1 class="title-main">CHUYẾN TÀU 02:14</h1>
     <div class="title-sub">CHƯƠNG 1: TẤM VÉ KHÔNG NGÀY</div>
     <div class="title-actions">
-      <button id="btn-start-game" class="btn-primary">BẮT ĐẦU CHƯƠNG 1</button>
-      <button id="btn-title-assets" class="btn-secondary">🖼️ NẠP 15 ẢNH ASSETS (<span id="title-asset-count">0/15</span>)</button>
+      <button id="btn-start-game" class="btn-primary">BẮT ĐẦU</button>
     </div>
-    <p style="font-size:0.82rem; color:#9e9b90; max-width:560px; line-height:1.6; margin:0;">
-      Engine tự động tìm 15 file ảnh trong thư mục <b>./assets/</b> hoặc cho phép bạn <b>kéo-thả toàn bộ ảnh trực tiếp</b> bằng nút <b>NẠP ASSETS [M]</b> kèm tính năng tự động xóa nền trắng cho Sprite &amp; Icon.<br>
-      Nếu chưa nạp ảnh, game vẫn chạy đầy đủ 100% với đồ họa phác thảo dự phòng.
+    <p style="font-size:0.82rem; color:#9e9b90; max-width:520px; line-height:1.65; margin:0;">
+      Di chuyển: <b>A / D</b> hoặc <b>← / →</b> &nbsp;•&nbsp; Tương tác: <b>E / Click</b><br>
+      Máy Ảnh Kính Nứt: <b>V / Chuột phải</b> &nbsp;•&nbsp; Chụp ảnh: <b>Space / Click</b> &nbsp;•&nbsp; Túi đồ: <b>I</b>
     </p>
   </div>
 
-  <!-- ASSET MANAGER MODAL [M] -->
-  <div id="asset-modal" class="modal-overlay">
-    <div class="modal-card wide">
-      <div class="modal-header">
-        <h2 class="modal-title">🖼️ QUẢN LÝ TÀI NGUYÊN (ASSETS: <span id="modal-asset-count">0/15</span>)</h2>
-        <button class="btn-close" onclick="closeModal('asset-modal')">ĐÓNG [M]</button>
+  <!-- AUTOMATIC LOADING SCREEN -->
+  <div id="loading-screen" class="modal-overlay">
+    <div class="loading-box">
+      <div class="loading-title">LOADING...</div>
+      <div class="loading-bar-track">
+        <div id="loading-bar-fill"></div>
       </div>
-
-      <div id="drop-zone">
-        <div style="font-size:1rem; color:var(--ochre); font-weight:700; margin-bottom:6px;">
-          KÉO &amp; THẢ TOÀN BỘ 15 FILE ẢNH PNG/JPG VÀO ĐÂY
-        </div>
-        <div style="font-size:0.78rem; color:var(--muted); margin-bottom:12px;">
-          Hệ thống tự động nhận diện tên file theo từ khóa (luggage, coach, dining, neg, kien, benam, bactung, soatve, portrait, items) hoặc bấm từng ô bên dưới để chọn riêng.
-        </div>
-        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-          <button class="ink-btn highlight" onclick="document.getElementById('bulk-file-input').click()">📂 Chọn Nhiều File Ảnh</button>
-          <button class="ink-btn" onclick="document.getElementById('folder-file-input').click()">📁 Chọn Cả Thư Mục assets/</button>
-          <button class="ink-btn" onclick="assetManager.autoLoadFromFolder()">🔄 Thử Nạp Lại ./assets/</button>
-        </div>
-        <input type="file" id="bulk-file-input" multiple accept="image/*" style="display:none" />
-        <input type="file" id="folder-file-input" webkitdirectory directory multiple accept="image/*" style="display:none" />
-        <input type="file" id="single-file-input" accept="image/*" style="display:none" />
+      <div class="loading-meta">
+        <span id="loading-status">ĐANG NẠP TÀI NGUYÊN... 0/15</span>
+        <span id="loading-percent">0%</span>
       </div>
-
-      <div class="asset-toolbar">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--paper);">
-          <input type="checkbox" id="chk-chroma-key" checked style="width:16px; height:16px; accent-color:#dfc374;" />
-          <span><b>Tự động xóa nền trắng cho Sprite &amp; Icon</b> (Flood-fill giữ nguyên nét mực đen)</span>
-        </label>
-        <span style="color:var(--muted); font-size:0.75rem;">Click vào bất kỳ ô nào bên dưới để nạp/thay thế riêng ảnh đó</span>
-      </div>
-
-      <div id="asset-grid" class="asset-grid"></div>
     </div>
   </div>
 
@@ -1189,7 +1131,7 @@
         this.processed = {}; // key -> HTMLImageElement | HTMLCanvasElement
         this.itemSlices = {}; // index 0..6 -> HTMLCanvasElement
         this.autoKeying = true;
-        this.pendingSingleKey = null;
+        this.loadedOnce = false;
       }
 
       get(key) {
@@ -1378,146 +1320,52 @@
           this.processed[key] = img;
         }
         if (key === 'items_sheet') this.sliceItemsSheet();
-        this.refreshUI();
       }
 
-      reprocessAllKeyed() {
-        ASSET_MANIFEST.forEach(meta => {
-          if (meta.keying && this.raw[meta.key]) {
-            this.processed[meta.key] = this.autoKeying
-              ? this.removeWhiteBackground(this.raw[meta.key], meta.key === 'items_sheet')
-              : this.raw[meta.key];
-          }
-        });
-        if (this.raw['items_sheet']) this.sliceItemsSheet();
-        this.refreshUI();
-      }
-
-      autoLoadFromFolder() {
-        ASSET_MANIFEST.forEach(meta => {
-          const tryLoad = (url, fallbackUrl = null) => {
+      /**
+       * Automatically fetches all 15 assets from ./assets/ with smart extension fallback (.png -> .jpg -> .jpeg).
+       * Gracefully resolves even if an asset is missing so procedural fallbacks remain playable.
+       */
+      loadSingleAsset(meta) {
+        const extensions = ['png', 'jpg', 'jpeg'];
+        return new Promise((resolve) => {
+          let idx = 0;
+          const tryNext = () => {
+            if (idx >= extensions.length) {
+              resolve(false);
+              return;
+            }
+            const ext = extensions[idx++];
             const img = new Image();
             img.crossOrigin = 'anonymous';
-            img.onload = () => this.registerImage(meta.key, img);
-            img.onerror = () => {
-              if (fallbackUrl) tryLoad(fallbackUrl, null);
+            img.onload = () => {
+              this.registerImage(meta.key, img);
+              resolve(true);
             };
-            img.src = url;
+            img.onerror = () => tryNext();
+            img.src = `./assets/${meta.key}.${ext}`;
           };
-          const base = `./assets/${meta.file}`;
-          const jpgFallback = base.replace(/\.png$/i, '.jpg');
-          tryLoad(base, jpgFallback);
+          tryNext();
         });
       }
 
-      matchFilenameToKey(filename) {
-        const n = filename.toLowerCase();
-        const isNeg = n.includes('neg') || n.includes('amban') || n.includes('negative');
-        const isPort = n.includes('portrait') || n.includes('chandung') || n.includes('avatar');
-
-        if (n.includes('luggage') || n.includes('hanhly') || n.includes('toa1') || n.includes('car1')) {
-          return isNeg ? 'bg_car_luggage_neg' : 'bg_car_luggage';
+      async loadAllAssets(onProgress) {
+        if (this.loadedOnce) {
+          if (onProgress) onProgress(ASSET_MANIFEST.length, ASSET_MANIFEST.length, 'Hoàn tất');
+          return;
         }
-        if (n.includes('coach') || n.includes('ghecung') || n.includes('toa2') || n.includes('car2')) {
-          return isNeg ? 'bg_car_coach_neg' : 'bg_car_coach';
-        }
-        if (n.includes('dining') || n.includes('nhaan') || n.includes('toa3') || n.includes('car3')) {
-          return isNeg ? 'bg_car_dining_neg' : 'bg_car_dining';
-        }
-        if (n.includes('kien')) return isPort ? 'portrait_kien' : 'sprite_kien_sheet';
-        if (n.includes('benam') || n.includes('nam')) return isPort ? 'portrait_benam' : 'sprite_benam';
-        if (n.includes('bactung') || n.includes('tung') || n.includes('chef')) return isPort ? 'portrait_bactung' : 'sprite_bactung';
-        if (n.includes('soatve') || n.includes('inspector') || n.includes('ticketman')) return isPort ? 'portrait_soatve' : 'sprite_soatve';
-        if (n.includes('item') || n.includes('icon') || n.includes('sheet')) return 'items_sheet';
-        return null;
-      }
+        let completed = 0;
+        const total = ASSET_MANIFEST.length;
+        if (onProgress) onProgress(0, total, 'Đang kết nối kho tài nguyên...');
 
-      handleFiles(fileList, forcedKey = null) {
-        let matched = 0;
-        Array.from(fileList).forEach(file => {
-          if (!file.type.startsWith('image/')) return;
-          const key = forcedKey || this.matchFilenameToKey(file.name);
-          if (!key) return;
-          matched++;
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            const img = new Image();
-            img.onload = () => this.registerImage(key, img);
-            img.src = ev.target.result;
-          };
-          reader.readAsDataURL(file);
-        });
-        if (matched > 0) {
-          showToast(`Đã nạp ${matched} tài nguyên đồ họa!`);
-        } else if (!forcedKey) {
-          showToast('Không nhận diện được tên file. Hãy click trực tiếp vào từng ô bên dưới để chọn ảnh.', true);
-        }
-      }
-
-      refreshUI() {
-        const count = this.getLoadedCount();
-        const badge = document.getElementById('asset-count-badge');
-        const titleCount = document.getElementById('title-asset-count');
-        const modalCount = document.getElementById('modal-asset-count');
-        if (badge) {
-          badge.textContent = `${count}/15`;
-          badge.classList.toggle('partial', count < 15);
-        }
-        if (titleCount) titleCount.textContent = `${count}/15`;
-        if (modalCount) modalCount.textContent = `${count}/15`;
-
-        this.renderAssetGrid();
-        drawHudIcons();
-        if (game) {
-          renderInventory();
-          if (game.dialogue.active) renderCurrentDialogueLine();
-        }
-      }
-
-      renderAssetGrid() {
-        const grid = document.getElementById('asset-grid');
-        if (!grid) return;
-        grid.innerHTML = '';
-        ASSET_MANIFEST.forEach(meta => {
-          const card = document.createElement('div');
-          const loadedAsset = this.processed[meta.key];
-          card.className = 'asset-slot-card' + (loadedAsset ? ' loaded' : '');
-          card.onclick = () => {
-            this.pendingSingleKey = meta.key;
-            document.getElementById('single-file-input').click();
-          };
-
-          const thumb = document.createElement('div');
-          thumb.className = 'asset-thumb';
-          if (loadedAsset) {
-            const previewCanvas = document.createElement('canvas');
-            const pw = 160, ph = 82;
-            previewCanvas.width = pw;
-            previewCanvas.height = ph;
-            const pctx = previewCanvas.getContext('2d');
-            const iw = loadedAsset.width || loadedAsset.naturalWidth;
-            const ih = loadedAsset.height || loadedAsset.naturalHeight;
-            const scale = Math.min(pw / iw, ph / ih);
-            const dw = iw * scale, dh = ih * scale;
-            pctx.drawImage(loadedAsset, (pw - dw) / 2, (ph - dh) / 2, dw, dh);
-            thumb.appendChild(previewCanvas);
-          } else {
-            thumb.textContent = 'Chưa nạp (Click)';
-          }
-
-          const title = document.createElement('div');
-          title.className = 'asset-slot-name';
-          title.textContent = (loadedAsset ? '✓ ' : '○ ') + meta.label;
-
-          const fn = document.createElement('div');
-          fn.className = 'asset-slot-file';
-          fn.textContent = meta.file;
-
-          card.appendChild(thumb);
-          card.appendChild(title);
-          card.appendChild(fn);
-          grid.appendChild(card);
-        });
+        await Promise.all(
+          ASSET_MANIFEST.map(async (meta) => {
+            await this.loadSingleAsset(meta);
+            completed++;
+            if (onProgress) onProgress(completed, total, meta.label);
+          })
+        );
+        this.loadedOnce = true;
       }
     }
 
@@ -2298,16 +2146,6 @@
       document.getElementById(id).classList.remove('visible');
     }
 
-    function toggleAssetModal() {
-      const m = document.getElementById('asset-modal');
-      if (m.classList.contains('visible')) {
-        closeModal('asset-modal');
-      } else {
-        assetManager.renderAssetGrid();
-        openModal('asset-modal');
-      }
-    }
-
     function openNotebook() {
       sound.playClick(560);
       const list = document.getElementById('notebook-list');
@@ -3065,13 +2903,12 @@
     function setupInputs() {
       window.addEventListener('keydown', e => {
         const k = e.key.toLowerCase();
-        if (k === 'm') { toggleAssetModal(); return; }
         if (!game || !game.started) return;
 
         // Ignore movement if modal is open
         if (document.querySelector('.modal-overlay.visible')) {
           if (k === 'escape') {
-            ['asset-modal', 'notebook-modal', 'polaroid-modal', 'padlock-modal'].forEach(closeModal);
+            ['notebook-modal', 'polaroid-modal', 'padlock-modal'].forEach(closeModal);
           }
           return;
         }
@@ -3160,61 +2997,56 @@
       };
       document.getElementById('btn-inv-toggle').onclick = () => toggleInventoryDrawer();
       document.getElementById('btn-notebook').onclick = () => openNotebook();
-      document.getElementById('btn-assets').onclick = () => toggleAssetModal();
-      document.getElementById('btn-title-assets').onclick = () => toggleAssetModal();
       document.getElementById('btn-mute').onclick = () => {
         sound.init();
         const on = sound.toggle();
         document.getElementById('btn-mute').textContent = on ? '🔊' : '🔇';
       };
 
-      // Start Game
-      document.getElementById('btn-start-game').onclick = () => {
+      // Start Game -> Show Loading Screen -> Auto-load 15 Assets -> Fade into Gameplay
+      document.getElementById('btn-start-game').onclick = async () => {
         sound.init();
-        sound.playTrainWhistle();
         closeModal('title-screen');
-        game.started = true;
+
+        const loadingEl = document.getElementById('loading-screen');
+        const barFill = document.getElementById('loading-bar-fill');
+        const statusEl = document.getElementById('loading-status');
+        const pctEl = document.getElementById('loading-percent');
+
+        loadingEl.classList.remove('fading-out');
+        openModal('loading-screen');
+
+        await assetManager.loadAllAssets((done, total) => {
+          const pct = Math.round((done / total) * 100);
+          barFill.style.width = `${pct}%`;
+          pctEl.textContent = `${pct}%`;
+          statusEl.textContent = `ĐANG NẠP TÀI NGUYÊN... ${done}/${total}`;
+        });
+
+        statusEl.textContent = 'ĐÃ NẠP XONG! ĐANG VÀO CHUYẾN TÀU...';
+        barFill.style.width = '100%';
+        pctEl.textContent = '100%';
+
+        // Prepare HUD, icons & inventory with loaded assets
+        drawHudIcons();
         updateHUD();
         renderInventory();
-        startDialogue([
-          { speaker: 'Kiên', text: 'Ư... đầu mình đau quá. Đây là đâu? Một chuyến tàu xuyên đêm?' },
-          { speaker: 'Kiên', text: 'Đồng hồ trên tường chết cứng ở 02:14... Trong túi chỉ có tấm vé trống và chiếc máy ảnh kính nứt bị kẹt cò.' },
-          { speaker: 'Hệ Thống', text: 'Dùng A/D (hoặc ←/→) để đi dọc toa tàu. Hãy thử nói chuyện với cô bé mặc áo mưa vàng ở phía bên phải.' }
-        ]);
+
+        setTimeout(() => {
+          loadingEl.classList.add('fading-out');
+          setTimeout(() => {
+            closeModal('loading-screen');
+            loadingEl.classList.remove('fading-out');
+            game.started = true;
+            sound.playTrainWhistle();
+            startDialogue([
+              { speaker: 'Kiên', text: 'Ư... đầu mình đau quá. Đây là đâu? Một chuyến tàu xuyên đêm?' },
+              { speaker: 'Kiên', text: 'Đồng hồ trên tường chết cứng ở 02:14... Trong túi chỉ có tấm vé trống và chiếc máy ảnh kính nứt bị kẹt cò.' },
+              { speaker: 'Hệ Thống', text: 'Dùng A/D (hoặc ←/→) để đi dọc toa tàu. Hãy thử nói chuyện với cô bé mặc áo mưa vàng ở phía bên phải.' }
+            ]);
+          }, 420);
+        }, 280);
       };
-
-      // Asset Manager Upload & Drag-and-Drop
-      const dropZone = document.getElementById('drop-zone');
-      ['dragenter', 'dragover'].forEach(ev => {
-        dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-      });
-      ['dragleave', 'drop'].forEach(ev => {
-        dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
-      });
-      dropZone.addEventListener('drop', e => {
-        assetManager.handleFiles(e.dataTransfer.files);
-      });
-
-      document.getElementById('bulk-file-input').addEventListener('change', e => {
-        assetManager.handleFiles(e.target.files);
-        e.target.value = '';
-      });
-      document.getElementById('folder-file-input').addEventListener('change', e => {
-        assetManager.handleFiles(e.target.files);
-        e.target.value = '';
-      });
-      document.getElementById('single-file-input').addEventListener('change', e => {
-        if (assetManager.pendingSingleKey && e.target.files.length) {
-          assetManager.handleFiles(e.target.files, assetManager.pendingSingleKey);
-        }
-        assetManager.pendingSingleKey = null;
-        e.target.value = '';
-      });
-
-      document.getElementById('chk-chroma-key').addEventListener('change', e => {
-        assetManager.autoKeying = e.target.checked;
-        assetManager.reprocessAllKeyed();
-      });
     }
 
     function restartGame() {
@@ -3233,8 +3065,6 @@
     window.onload = function () {
       game = createInitialState();
       setupInputs();
-      assetManager.renderAssetGrid();
-      assetManager.autoLoadFromFolder();
       drawHudIcons();
       renderInventory();
       updateHUD();

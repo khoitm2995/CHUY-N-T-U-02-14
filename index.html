@@ -1,984 +1,11 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>CHUYẾN TÀU 02:14 — Chương 1 & Chương 2</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Patrick+Hand&family=Special+Elite&display=swap" rel="stylesheet">
+<!-- ... existing code ... -->
   <style>
     :root {
       --bg-void: #060706;
-      --charcoal: #242526;
+      --charcoal: #2c2d2e;
       --ink: #080908;
       --ochre: #dfc374;
-      --ochre-dim: #a89152;
-      --blood: #c22e35;
-      --paper: #e6dfd0;
-      --muted: #9b978c;
-      --moss: #2b342d;
-    }
-
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: var(--bg-void);
-      color: var(--paper);
-      font-family: 'Courier Prime', monospace;
-    }
-
-    /* ============================================================
-       CENTERED 16:9 STAGE WITH DARK LETTERBOXING
-       ============================================================ */
-    #viewport {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at center, #111412 0%, #050605 85%);
-      overflow: hidden;
-      position: relative;
-    }
-
-    #stage {
-      position: relative;
-      width: 100%;
-      max-width: calc(100vh * (16 / 9));
-      aspect-ratio: 16 / 9;
-      background: #080a09;
-      box-shadow: 0 0 60px rgba(0, 0, 0, 0.96), 0 0 0 2px #1c201d;
-      overflow: hidden;
-    }
-
-    #game-canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      cursor: crosshair;
-    }
-
-    /* Subtle CRT & Vignette Overlay */
-    #stage::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          rgba(0, 0, 0, 0.08) 0px,
-          rgba(0, 0, 0, 0.08) 1px,
-          transparent 1px,
-          transparent 3px
-        ),
-        radial-gradient(ellipse at center, transparent 56%, rgba(4, 5, 4, 0.78) 100%);
-      z-index: 12;
-    }
-
-    /* ============================================================
-       TOP-LEFT HUD: TILTED HAND-DRAWN CAMERA & TICKET ICONS
-       ============================================================ */
-    #hud-top-left {
-      position: absolute;
-      top: 2.2%;
-      left: 1.8%;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 25;
-    }
-
-    .hud-sketch-btn {
-      position: relative;
-      background: transparent;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      transition: transform 0.16s ease, filter 0.16s ease;
-      filter: drop-shadow(3px 5px 5px rgba(0, 0, 0, 0.9));
-    }
-
-    .hud-sketch-btn.cam {
-      width: clamp(54px, 6.4vw, 86px);
-      height: clamp(42px, 5vw, 66px);
-      transform: rotate(-7deg);
-    }
-
-    .hud-sketch-btn.ticket {
-      width: clamp(58px, 6.8vw, 90px);
-      height: clamp(38px, 4.6vw, 60px);
-      transform: rotate(-11deg);
-    }
-
-    .hud-sketch-btn:hover {
-      transform: scale(1.09) rotate(-2deg);
-      filter: drop-shadow(0 0 10px rgba(223, 195, 116, 0.65));
-    }
-
-    .hud-sketch-btn.active {
-      transform: scale(1.1) rotate(-3deg);
-      filter: drop-shadow(0 0 14px rgba(210, 42, 48, 0.95));
-    }
-
-    .hud-sketch-btn.locked {
-      opacity: 0.65;
-    }
-
-    .hud-key-badge {
-      position: absolute;
-      bottom: -4px;
-      right: -4px;
-      background: #141615;
-      color: var(--ochre);
-      border: 2px solid #080908;
-      box-shadow: 0 0 0 1px #5d5c54;
-      border-radius: 3px;
-      font-size: 0.66rem;
-      font-weight: 700;
-      padding: 1px 5px;
-      pointer-events: none;
-    }
-
-    /* ============================================================
-       TOP-RIGHT HUD
-       ============================================================ */
-    #hud-top-right {
-      position: absolute;
-      top: 2.2%;
-      right: 1.8%;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      z-index: 25;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .scene-tag {
-      background: rgba(20, 22, 21, 0.92);
-      border: 2px solid var(--ink);
-      box-shadow: 0 0 0 1.5px #535750, 2px 4px 10px rgba(0, 0, 0, 0.8);
-      padding: 5px 10px;
-      border-radius: 3px;
-      font-family: 'Special Elite', 'Courier Prime', monospace;
-      font-size: clamp(0.7rem, 1.15vw, 0.88rem);
-      color: var(--paper);
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .scene-tag .clock {
-      color: #e0464d;
-      font-weight: 700;
-      border-left: 1px solid #4a4e48;
-      padding-left: 7px;
-    }
-
-    .ink-btn {
-      background: rgba(31, 34, 32, 0.94);
-      color: var(--paper);
-      border: 2px solid var(--ink);
-      box-shadow: 0 0 0 1.5px #5f635c, 2px 3px 0 #070807;
-      border-radius: 3px;
-      padding: 5px 9px;
-      font-family: 'Courier Prime', monospace;
-      font-size: clamp(0.68rem, 1.05vw, 0.8rem);
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.14s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .ink-btn:hover {
-      background: #303532;
-      color: var(--ochre);
-      transform: translateY(-1px);
-    }
-
-    .ink-btn.highlight {
-      border-color: #090a09;
-      box-shadow: 0 0 0 1.5px var(--ochre), 2px 3px 0 #070807;
-      color: var(--ochre);
-    }
-
-    /* ============================================================
-       TOAST NOTIFICATIONS
-       ============================================================ */
-    #toast-container {
-      position: absolute;
-      top: 11%;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 60;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      align-items: center;
-      width: min(86%, 540px);
-      pointer-events: none;
-    }
-
-    .toast {
-      background: rgba(24, 26, 25, 0.96);
-      border: 2px solid var(--ink);
-      box-shadow: 0 0 0 2px var(--ochre-dim), 0 8px 20px rgba(0, 0, 0, 0.9);
-      padding: 7px 14px;
-      border-radius: 3px;
-      font-size: clamp(0.75rem, 1.15vw, 0.86rem);
-      color: #f4eee0;
-      text-align: center;
-      animation: toastSlide 0.2s ease-out;
-    }
-
-    .toast.horror {
-      box-shadow: 0 0 0 2px var(--blood), 0 8px 22px rgba(0, 0, 0, 0.95);
-      color: #ffd6d8;
-    }
-
-    @keyframes toastSlide {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ============================================================
-       SALLY FACE RAGGED DIALOGUE BOX (BOTTOM)
-       ============================================================ */
-    #dialogue-box {
-      position: absolute;
-      bottom: 3.5%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 88%;
-      max-width: 960px;
-      min-height: 22%;
-      background: var(--charcoal);
-      border: 4px solid var(--ink);
-      outline: 2px solid #7c7a72;
-      outline-offset: -7px;
-      border-radius: 4px 10px 5px 8px / 6px 4px 9px 5px;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.96), inset 0 0 28px rgba(0, 0, 0, 0.65);
-      display: none;
-      padding: 1.6% 2%;
-      gap: 2%;
-      z-index: 45;
-      cursor: pointer;
-    }
-
-    #dialogue-box.visible {
-      display: flex;
-      align-items: stretch;
-    }
-
-    #portrait-frame {
-      width: clamp(72px, 11.5vw, 130px);
-      height: clamp(72px, 11.5vw, 130px);
-      min-width: clamp(72px, 11.5vw, 130px);
-      background: #1b1e1c;
-      border: 3px solid var(--ink);
-      box-shadow: 0 0 0 2px #6b6c65, inset 0 0 16px rgba(0, 0, 0, 0.75);
-      overflow: hidden;
-      align-self: center;
-      position: relative;
-    }
-
-    #portrait-canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    #dialogue-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: relative;
-      padding-right: 18px;
-    }
-
-    #dialogue-speaker {
-      font-family: 'Special Elite', 'Courier Prime', monospace;
-      font-size: clamp(0.85rem, 1.45vw, 1.15rem);
-      font-weight: 700;
-      color: var(--ochre);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 5px;
-      text-shadow: 2px 2px 0 #0d0e0d;
-    }
-
-    #dialogue-text {
-      font-family: 'Patrick Hand', 'Courier Prime', sans-serif;
-      font-size: clamp(0.95rem, 1.8vw, 1.4rem);
-      line-height: 1.35;
-      color: #f2ede2;
-      text-shadow: 1px 1px 0 #0d0e0d;
-      flex: 1;
-    }
-
-    #dialogue-next-arrow {
-      position: absolute;
-      bottom: 2px;
-      right: 2px;
-      width: 0;
-      height: 0;
-      border-left: 7px solid transparent;
-      border-right: 7px solid transparent;
-      border-top: 10px solid #efe9db;
-      animation: arrowBounce 0.8s infinite ease-in-out;
-    }
-
-    @keyframes arrowBounce {
-      0%, 100% { transform: translateY(0); opacity: 1; }
-      50% { transform: translateY(4px); opacity: 0.35; }
-    }
-
-    /* ============================================================
-       SLEEK BOTTOM INVENTORY DRAWER (KEY I OR BUTTON)
-       ============================================================ */
-    #inventory-drawer {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%) translateY(0);
-      width: min(94%, 920px);
-      background: rgba(20, 22, 21, 0.96);
-      border: 3px solid var(--ink);
-      border-bottom: none;
-      box-shadow: 0 0 0 1.5px #575b54, 0 -10px 30px rgba(0, 0, 0, 0.9);
-      border-radius: 6px 6px 0 0;
-      padding: 8px 12px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 38;
-      transition: transform 0.22s ease;
-    }
-
-    #inventory-drawer.collapsed {
-      transform: translateX(-50%) translateY(105%);
-    }
-
-    #inv-slots {
-      display: flex;
-      gap: 7px;
-      overflow-x: auto;
-      flex: 1;
-      padding: 2px 0;
-    }
-
-    .inv-slot {
-      min-width: 62px;
-      width: 62px;
-      height: 64px;
-      background: #232624;
-      border: 2px solid var(--ink);
-      box-shadow: 0 0 0 1.5px #4e534c;
-      border-radius: 3px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3px;
-      cursor: pointer;
-      transition: all 0.14s ease;
-    }
-
-    .inv-slot:hover {
-      background: #2e3330;
-      box-shadow: 0 0 0 1.5px #9b978c;
-    }
-
-    .inv-slot.selected {
-      background: #352d1e;
-      box-shadow: 0 0 0 2px var(--ochre);
-    }
-
-    .inv-slot.combining {
-      background: #1b3632;
-      box-shadow: 0 0 0 2px #6fe0ca;
-      animation: pulseCombine 0.75s infinite alternate;
-    }
-
-    @keyframes pulseCombine {
-      from { transform: scale(1); }
-      to { transform: scale(1.06); }
-    }
-
-    .inv-icon-box {
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .inv-icon-box canvas, .inv-icon-box svg {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
-
-    .inv-name-mini {
-      font-size: 0.56rem;
-      color: #d9d2c2;
-      text-align: center;
-      line-height: 1.05;
-      margin-top: 2px;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-
-    #inv-detail-panel {
-      width: 280px;
-      max-width: 38%;
-      background: #1a1c1b;
-      border: 2px solid var(--ink);
-      box-shadow: 0 0 0 1.5px #484d46;
-      border-radius: 3px;
-      padding: 6px 9px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 64px;
-    }
-
-    #inv-sel-title {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--ochre);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    #inv-sel-desc {
-      font-size: 0.68rem;
-      color: var(--muted);
-      line-height: 1.22;
-      margin: 2px 0 4px 0;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    #inv-sel-actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .btn-mini {
-      background: #2b2f2d;
-      color: var(--paper);
-      border: 1.5px solid var(--ink);
-      box-shadow: 0 0 0 1px #636760;
-      border-radius: 2px;
-      padding: 2px 8px;
-      font-family: 'Courier Prime', monospace;
-      font-size: 0.68rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .btn-mini:hover {
-      color: var(--ochre);
-      box-shadow: 0 0 0 1px var(--ochre);
-    }
-
-    .btn-mini.active {
-      background: #1d4d46;
-      color: #fff;
-      box-shadow: 0 0 0 1px #72e0cc;
-    }
-
-    /* Controls Hint & Mobile Touch */
-    #controls-strip {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(12, 14, 13, 0.8);
-      border: 1px solid #3f443e;
-      border-radius: 3px;
-      padding: 3px 10px;
-      font-size: 0.7rem;
-      color: #a6a398;
-      z-index: 20;
-      pointer-events: none;
-      white-space: nowrap;
-      transition: opacity 0.2s;
-    }
-
-    #touch-pad {
-      position: absolute;
-      bottom: 14px;
-      left: 14px;
-      right: 14px;
-      display: flex;
-      justify-content: space-between;
-      pointer-events: none;
-      z-index: 22;
-    }
-
-    .touch-cluster {
-      display: flex;
-      gap: 8px;
-      pointer-events: auto;
-    }
-
-    .touch-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 4px;
-      background: rgba(24, 26, 25, 0.82);
-      border: 2px solid var(--ink);
-      box-shadow: 0 0 0 1.5px #5a5f58;
-      color: var(--paper);
-      font-size: 1rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-
-    .touch-btn:active { background: #752025; }
-
-    @media (min-width: 960px) {
-      #touch-pad { opacity: 0.35; }
-      #touch-pad:hover { opacity: 1; }
-    }
-
-    /* ============================================================
-       MODALS (TITLE, LOADING, CHAPTER TRANSITION, DARKROOM, NOTEBOOK, POLAROID, PADLOCK, ENDING)
-       ============================================================ */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(5, 6, 5, 0.9);
-      backdrop-filter: blur(4px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 16px;
-    }
-
-    .modal-overlay.visible {
-      display: flex;
-    }
-
-    .modal-card {
-      background: #222423;
-      border: 4px solid var(--ink);
-      outline: 2px solid #6a6d66;
-      outline-offset: -7px;
-      border-radius: 4px;
-      max-width: 560px;
-      width: 100%;
-      padding: 20px 22px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.98);
-      max-height: 92vh;
-      overflow-y: auto;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #3c403c;
-      padding-bottom: 10px;
-      margin-bottom: 14px;
-      gap: 10px;
-    }
-
-    .modal-title {
-      font-family: 'Special Elite', 'Courier Prime', monospace;
-      font-size: 1.2rem;
-      color: var(--ochre);
-      margin: 0;
-    }
-
-    .btn-close {
-      background: #171918;
-      border: 1.5px solid #686b64;
-      color: #ddd;
-      padding: 5px 12px;
-      cursor: pointer;
-      font-family: inherit;
-      font-weight: 700;
-      border-radius: 2px;
-    }
-
-    .btn-close:hover {
-      border-color: var(--blood);
-      color: #fff;
-    }
-
-    /* ============================================================
-       ATMOSPHERIC TITLE SCREEN WITH BG_TITLE / BG_PLATFORM_ZERO
-       ============================================================ */
-    #title-screen {
-      background: #050605;
-      background-size: cover;
-      background-position: center;
-      flex-direction: column;
-      justify-content: space-between;
-      text-align: center;
-      padding: 36px 24px 22px 24px;
-      backdrop-filter: none;
-    }
-
-    #title-screen::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(180deg, rgba(6, 7, 6, 0.72) 0%, rgba(6, 7, 6, 0.35) 45%, rgba(6, 7, 6, 0.88) 100%),
-        radial-gradient(circle at 50% 40%, transparent 25%, rgba(4, 5, 4, 0.86) 100%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .title-content {
-      position: relative;
-      z-index: 2;
-      margin: auto 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .title-main {
-      font-family: 'Special Elite', monospace;
-      font-size: clamp(2.3rem, 6vw, 4.4rem);
-      letter-spacing: 5px;
-      color: #f3ede0;
-      text-shadow: 4px 5px 0 #080908, 0 0 28px rgba(194, 46, 53, 0.65);
-      margin: 0 0 4px 0;
-    }
-
-    .title-sub {
-      font-family: 'Special Elite', monospace;
-      font-size: clamp(1rem, 2.2vw, 1.35rem);
-      color: var(--ochre);
-      letter-spacing: 3px;
-      margin-bottom: 30px;
-      text-shadow: 2px 2px 0 #080908;
-    }
-
-    .title-actions {
-      display: flex;
-      gap: 14px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn-primary {
-      background: #801f24;
-      color: #f5efe2;
-      border: 3px solid var(--ink);
-      box-shadow: 0 0 0 2px #cc474e, 0 8px 24px rgba(0, 0, 0, 0.9);
-      border-radius: 3px;
-      padding: 13px 28px;
-      font-family: 'Special Elite', monospace;
-      font-size: 1.08rem;
-      letter-spacing: 1.5px;
-      cursor: pointer;
-      transition: transform 0.14s ease, background 0.14s ease;
-    }
-
-    .btn-primary:hover {
-      transform: scale(1.04);
-      background: #9c262d;
-    }
-
-    .btn-secondary {
-      background: rgba(28, 32, 29, 0.94);
-      color: var(--ochre);
-      border: 3px solid var(--ink);
-      box-shadow: 0 0 0 2px #7c7a72, 0 8px 24px rgba(0, 0, 0, 0.9);
-      border-radius: 3px;
-      padding: 13px 24px;
-      font-family: 'Special Elite', monospace;
-      font-size: 1.02rem;
-      letter-spacing: 1px;
-      cursor: pointer;
-      transition: transform 0.14s ease, background 0.14s ease;
-    }
-
-    .btn-secondary:hover {
-      transform: scale(1.04);
-      background: #333935;
-    }
-
-    .title-footer {
-      position: relative;
-      z-index: 2;
-      background: rgba(10, 12, 11, 0.82);
-      border: 1.5px solid #3c403c;
-      padding: 7px 16px;
-      border-radius: 3px;
-      font-size: clamp(0.72rem, 1.15vw, 0.84rem);
-      color: #c8c3b6;
-      letter-spacing: 0.4px;
-    }
-
-    /* Automatic Loading Screen */
-    #loading-screen {
-      background: radial-gradient(circle at center, #141916 0%, #050605 85%);
-      flex-direction: column;
-      text-align: center;
-      transition: opacity 0.45s ease;
-    }
-
-    #loading-screen.fading-out {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .loading-box {
-      width: min(88vw, 450px);
-      background: rgba(20, 22, 21, 0.94);
-      border: 3px solid var(--ink);
-      outline: 2px solid #595d56;
-      outline-offset: -6px;
-      padding: 26px 24px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95);
-    }
-
-    .loading-title {
-      font-family: 'Special Elite', monospace;
-      font-size: 1.55rem;
-      letter-spacing: 4px;
-      color: var(--ochre);
-      margin: 0 0 14px 0;
-      text-shadow: 2px 2px 0 #070807;
-    }
-
-    .loading-bar-track {
-      width: 100%;
-      height: 16px;
-      background: #0c0e0d;
-      border: 2px solid var(--ink);
-      box-shadow: 0 0 0 1px #4f544d;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-
-    #loading-bar-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #7a1d22 0%, #c22e35 65%, #e3c44b 100%);
-      transition: width 0.15s ease-out;
-    }
-
-    .loading-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.78rem;
-      color: var(--paper);
-      gap: 10px;
-    }
-
-    #loading-percent {
-      color: var(--ochre);
-      font-weight: 700;
-    }
-
-    /* Chapter Transition Card */
-    #chapter-card {
-      background: #040504;
-      flex-direction: column;
-      text-align: center;
-      z-index: 120;
-    }
-
-    /* Darkroom Minigame */
-    .darkroom-tank {
-      background: radial-gradient(circle at 50% 30%, #4d0e11 0%, #170607 80%);
-      border: 3px solid #090a09;
-      box-shadow: inset 0 0 36px rgba(255, 40, 40, 0.25);
-      padding: 18px;
-      text-align: center;
-      margin-bottom: 14px;
-      position: relative;
-    }
-
-    .darkroom-meter {
-      position: relative;
-      width: 100%;
-      height: 28px;
-      background: #0b0707;
-      border: 2px solid #592628;
-      margin: 14px 0;
-      overflow: hidden;
-    }
-
-    .darkroom-sweet {
-      position: absolute;
-      left: 64%;
-      width: 20%;
-      top: 0;
-      bottom: 0;
-      background: rgba(223, 195, 116, 0.35);
-      border-left: 2px dashed var(--ochre);
-      border-right: 2px dashed var(--ochre);
-    }
-
-    #darkroom-fill {
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 0%;
-      background: linear-gradient(90deg, #6b1519, #e03a42);
-    }
-
-    #darkroom-film-preview {
-      width: 240px;
-      height: 110px;
-      margin: 0 auto 10px auto;
-      background: #140808;
-      border: 2px solid #401a1c;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Special Elite', monospace;
-      color: #ff9c9c;
-      font-size: 0.9rem;
-      letter-spacing: 1px;
-      transition: filter 0.1s;
-    }
-
-    /* Polaroid Modal */
-    .polaroid-card {
-      background: #e3dccb;
-      padding: 14px 14px 28px 14px;
-      border: 2px solid #111;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95);
-      max-width: 390px;
-      margin: 0 auto;
-      transform: rotate(-1.5deg);
-    }
-
-    #polaroid-view-canvas {
-      width: 100%;
-      height: 240px;
-      background: #141917;
-      display: block;
-      border: 2px solid #111;
-    }
-
-    #polaroid-view-caption {
-      font-family: 'Patrick Hand', cursive, sans-serif;
-      color: #1c1a17;
-      font-size: 1.22rem;
-      margin-top: 10px;
-      text-align: center;
-      line-height: 1.3;
-    }
-
-    /* Padlock Modal */
-    .padlock-wheels {
-      display: flex;
-      justify-content: center;
-      gap: 14px;
-      margin: 18px 0;
-    }
-
-    .wheel {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      background: #181a19;
-      border: 2px solid var(--ink);
-      box-shadow: 0 0 0 1.5px #575c55;
-      padding: 10px 14px;
-    }
-
-    .wheel button {
-      width: 44px;
-      height: 30px;
-      background: #2c302e;
-      border: 1.5px solid #6b7069;
-      color: #fff;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .wheel button:hover { border-color: var(--ochre); }
-
-    .wheel-val {
-      font-family: 'Special Elite', monospace;
-      font-size: 2.1rem;
-      color: #f0e8d5;
-      width: 44px;
-      text-align: center;
-      background: #0c0d0c;
-      border: 2px solid #3c403c;
-      padding: 4px 0;
-    }
-
-    .shake-err { animation: shakeLock 0.35s ease; }
-    @keyframes shakeLock {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-10px); }
-      50% { transform: translateX(10px); }
-      75% { transform: translateX(-6px); }
-    }
-
-    /* Notebook Clues */
-    .clue-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .clue-item {
-      background: #1a1c1b;
-      border-left: 4px solid var(--ochre-dim);
-      padding: 8px 12px;
-      font-size: 0.85rem;
-      line-height: 1.4;
-    }
-
-    .clue-item.done {
-      border-left-color: #5e8264;
-      opacity: 0.58;
-      text-decoration: line-through;
-    }
-
-    .clue-item.current {
-      border-left-color: var(--blood);
-      background: #2a1c1d;
-      color: #fff;
-    }
-
+<!-- ... existing code ... -->
     .ending-quote {
       font-family: 'Patrick Hand', sans-serif;
       font-size: 1.24rem;
@@ -990,32 +17,39 @@
       text-align: left;
     }
 
-    @media (max-width: 720px) {
-      #controls-strip { display: none; }
-      #inventory-drawer { flex-direction: column; gap: 6px; padding: 6px 8px; }
-      #inv-slots { width: 100%; }
-      #inv-detail-panel { width: 100%; max-width: 100%; min-height: 44px; flex-direction: row; align-items: center; }
-      #inv-sel-desc { display: none; }
+    /* Settings Audio Sliders */
+    .settings-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+      background: #1a1c1b;
+      border: 1.5px solid #3c403c;
+      padding: 10px 12px;
+      border-radius: 3px;
     }
-  </style>
-</head>
-<body>
-  <div id="viewport">
-    <div id="stage">
-      <!-- 1280x720 INTERNAL 16:9 CANVAS -->
-      <canvas id="game-canvas" width="1280" height="720"></canvas>
 
-      <!-- TOP-LEFT HUD: TILTED HAND-DRAWN CAMERA & TICKET -->
-      <div id="hud-top-left">
-        <button id="hud-cam-btn" class="hud-sketch-btn cam locked" title="Máy Ảnh Kính Nứt [V] / Chuột phải">
-          <canvas id="hud-cam-canvas" width="120" height="90" style="width:100%;height:100%;"></canvas>
-          <span class="hud-key-badge">V</span>
-        </button>
-        <button id="hud-ticket-btn" class="hud-sketch-btn ticket" title="Tấm Vé Tàu">
-          <canvas id="hud-ticket-canvas" width="130" height="86" style="width:100%;height:100%;"></canvas>
-        </button>
-      </div>
+    .settings-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+      color: var(--paper);
+    }
 
+    .settings-val {
+      color: var(--ochre);
+      font-weight: 700;
+    }
+
+    .settings-slider {
+      width: 100%;
+      accent-color: var(--blood);
+      cursor: pointer;
+    }
+
+    @media (max-width: 720px) {
+<!-- ... existing code ... -->
       <!-- TOP-RIGHT HUD -->
       <div id="hud-top-right">
         <div class="scene-tag">
@@ -1024,476 +58,105 @@
         </div>
         <button id="btn-inv-toggle" class="ink-btn" title="Mở/Đóng Túi Đồ [I]">🎒 Túi [I]</button>
         <button id="btn-notebook" class="ink-btn" title="Sổ Tay Manh Mối">📓 Sổ</button>
+        <button id="btn-settings" class="ink-btn" title="Cài Đặt Âm Thanh [ESC]">⚙</button>
         <button id="btn-mute" class="ink-btn" title="Bật/Tắt Âm Thanh">🔊</button>
       </div>
 
       <!-- TOASTS -->
-      <div id="toast-container"></div>
-
-      <!-- CONTROLS HINT -->
-      <div id="controls-strip">
-        Đi: <b>A/D</b> hoặc <b>←/→</b> &nbsp;|&nbsp; Tương tác: <b>E / Click</b> &nbsp;|&nbsp; Kính Nứt: <b>V / Chuột phải</b> &nbsp;|&nbsp; Chụp: <b>Space / Click</b> &nbsp;|&nbsp; Túi: <b>I</b>
-      </div>
-
-      <!-- MOBILE TOUCH PAD -->
-      <div id="touch-pad">
-        <div class="touch-cluster">
-          <button class="touch-btn" id="touch-left">◀</button>
-          <button class="touch-btn" id="touch-right">▶</button>
-        </div>
-        <div class="touch-cluster">
-          <button class="touch-btn" id="touch-e">E</button>
-          <button class="touch-btn" id="touch-shoot" style="display:none; color:#ff6b72;">📸</button>
-        </div>
-      </div>
-
-      <!-- SALLY FACE DIALOGUE BOX -->
-      <div id="dialogue-box">
-        <div id="portrait-frame">
-          <canvas id="portrait-canvas" width="140" height="140"></canvas>
-        </div>
-        <div id="dialogue-body">
-          <div>
-            <div id="dialogue-speaker">KIÊN</div>
-            <div id="dialogue-text">...</div>
-          </div>
-          <div id="dialogue-next-arrow"></div>
-        </div>
-      </div>
-
-      <!-- BOTTOM INVENTORY DRAWER -->
-      <div id="inventory-drawer">
-        <div id="inv-slots"></div>
-        <div id="inv-detail-panel">
-          <div style="flex:1; min-width:0;">
-            <div id="inv-sel-title">Túi Đồ</div>
-            <div id="inv-sel-desc">Chọn vật phẩm để kiểm tra hoặc ghép 2 món với nhau.</div>
-          </div>
-          <div id="inv-sel-actions"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TITLE SCREEN MODAL -->
-  <div id="title-screen" class="modal-overlay visible">
-    <div></div>
-    <div class="title-content">
-      <h1 class="title-main">CHUYẾN TÀU 02:14</h1>
-      <div class="title-sub">The 02:14 Express</div>
+<!-- ... existing code ... -->
       <div class="title-actions">
         <button id="btn-start-ch1" class="btn-primary">BẮT ĐẦU (CHƯƠNG 1)</button>
         <button id="btn-start-ch2" class="btn-secondary">CHƠI CHƯƠNG 2 (SÂN GA SƯƠNG MÙ)</button>
+        <button id="btn-title-settings" class="btn-secondary">⚙ CÀI ĐẶT</button>
       </div>
     </div>
     <div class="title-footer">
-      <b>[A/D]</b>: Di chuyển &nbsp;|&nbsp; <b>[E]</b>: Tương tác &nbsp;|&nbsp; <b>[V / Chuột phải]</b>: Máy ảnh Kính Nứt &nbsp;|&nbsp; <b>[I]</b>: Túi đồ
+      <b>[A/D]</b>: Di chuyển &nbsp;|&nbsp; <b>[E]</b>: Tương tác &nbsp;|&nbsp; <b>[V / Chuột phải]</b>: Máy ảnh Kính Nứt &nbsp;|&nbsp; <b>[I]</b>: Túi đồ &nbsp;|&nbsp; <b>[ESC]</b>: Cài đặt
+    </div>
+  </div>
+
+  <!-- AUDIO SETTINGS MODAL -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width:440px;">
+      <div class="modal-header">
+        <h2 class="modal-title">⚙ CÀI ĐẶT ÂM THANH</h2>
+        <button class="btn-close" onclick="closeModal('settings-modal')">ĐÓNG</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-top">
+          <span>Âm lượng Tổng (Master)</span>
+          <span id="val-master" class="settings-val">85%</span>
+        </div>
+        <input id="slider-master" class="settings-slider" type="range" min="0" max="100" value="85" />
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-top">
+          <span>Môi trường & Nhạc nền (Ambience)</span>
+          <span id="val-ambience" class="settings-val">75%</span>
+        </div>
+        <input id="slider-ambience" class="settings-slider" type="range" min="0" max="100" value="75" />
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-top">
+          <span>Hiệu ứng & Giọng thoại (SFX)</span>
+          <span id="val-sfx" class="settings-val">90%</span>
+        </div>
+        <input id="slider-sfx" class="settings-slider" type="range" min="0" max="100" value="90" />
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:6px;">
+        <button id="btn-settings-mute" class="ink-btn">🔊 ĐANG BẬT TIẾNG</button>
+        <span style="font-size:0.72rem; color:var(--muted);">Tự lưu cấu hình • Hỗ trợ ./assets/audio/*.mp3</span>
+      </div>
     </div>
   </div>
 
   <!-- AUTOMATIC LOADING SCREEN -->
-  <div id="loading-screen" class="modal-overlay">
-    <div class="loading-box">
-      <div class="loading-title">LOADING...</div>
-      <div class="loading-bar-track">
-        <div id="loading-bar-fill"></div>
-      </div>
-      <div class="loading-meta">
-        <span id="loading-status">ĐANG NẠP TÀI NGUYÊN... 0/27</span>
-        <span id="loading-percent">0%</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- CHAPTER TRANSITION CARD -->
-  <div id="chapter-card" class="modal-overlay">
-    <div style="font-size:0.9rem; letter-spacing:4px; color:#c22e35; margin-bottom:10px;">CHUYẾN TÀU 02:14</div>
-    <h2 id="chapter-card-title" style="font-family:'Special Elite',monospace; font-size:clamp(1.8rem,4.5vw,3rem); color:#f3ede0; margin:0 0 10px 0;">CHƯƠNG 2: SÂN GA SƯƠNG MÙ</h2>
-    <p id="chapter-card-sub" style="color:var(--ochre); font-size:1rem; letter-spacing:2px;">PLATFORM ZERO — GA ĐÁ TRẮNG</p>
-  </div>
-
-  <!-- DARKROOM FILM DEVELOPING MINIGAME MODAL -->
-  <div id="darkroom-modal" class="modal-overlay">
-    <div class="modal-card" style="max-width:460px; text-align:center;">
-      <div class="modal-header">
-        <h2 class="modal-title">🎞️ PHÒNG TỐI TRÁNG PHIM</h2>
-        <button class="btn-close" onclick="closeDarkroom()">THOÁT</button>
-      </div>
-      <div class="darkroom-tank">
-        <div id="darkroom-film-preview">CHƯA NHÚNG THUỐC HIỆN</div>
-        <div class="darkroom-meter">
-          <div class="darkroom-sweet"></div>
-          <div id="darkroom-fill"></div>
-        </div>
-        <div id="darkroom-hint" style="font-size:0.8rem; color:#e6b8b8;">
-          Nhấn giữ nút bên dưới (hoặc giữ phím <b>SPACE</b>) để ngâm dải phim vào thuốc hiện. <b>Thả ra khi thanh đỏ nằm trong vùng vàng (64% – 84%)</b>!
-        </div>
-      </div>
-      <button id="btn-darkroom-hold" class="btn-primary" style="width:100%; padding:12px;">GIỮ ĐỂ NGÂM PHIM</button>
-    </div>
-  </div>
-
-  <!-- NOTEBOOK MODAL -->
-  <div id="notebook-modal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 class="modal-title" id="notebook-title">📓 SỔ TAY ĐIỀU TRA</h2>
-        <button class="btn-close" onclick="closeModal('notebook-modal')">ĐÓNG</button>
-      </div>
-      <ul id="notebook-list" class="clue-list"></ul>
-    </div>
-  </div>
-
-  <!-- POLAROID MODAL -->
-  <div id="polaroid-modal" class="modal-overlay">
-    <div class="modal-card" style="background:transparent; border:none; outline:none; box-shadow:none; max-width:430px; text-align:center;">
-      <div class="polaroid-card">
-        <canvas id="polaroid-view-canvas" width="360" height="240"></canvas>
-        <div id="polaroid-view-caption">...</div>
-      </div>
-      <button class="ink-btn highlight" style="margin-top:16px; padding:8px 18px;" onclick="closeModal('polaroid-modal')">CẤT ẢNH VÀO TÚI</button>
-    </div>
-  </div>
-
-  <!-- 3-DIGIT PADLOCK MODAL -->
-  <div id="padlock-modal" class="modal-overlay">
-    <div class="modal-card" id="padlock-card" style="max-width:390px; text-align:center;">
-      <div class="modal-header">
-        <h2 class="modal-title">🔒 RƯƠNG QUẠ SẮT</h2>
-        <button class="btn-close" onclick="closeModal('padlock-modal')">HỦY</button>
-      </div>
-      <p style="font-size:0.84rem; color:#bab4a6; margin:0 0 8px 0;">
-        Ổ khóa sắt rỉ 3 chữ số. Xoay đúng mật mã khắc trong lớp âm bản Toa 1.
-      </p>
-      <div class="padlock-wheels">
-        <div class="wheel">
-          <button onclick="changeDigit(0, 1)">▲</button>
-          <div class="wheel-val" id="digit-0">0</div>
-          <button onclick="changeDigit(0, -1)">▼</button>
-        </div>
-        <div class="wheel">
-          <button onclick="changeDigit(1, 1)">▲</button>
-          <div class="wheel-val" id="digit-1">0</div>
-          <button onclick="changeDigit(1, -1)">▼</button>
-        </div>
-        <div class="wheel">
-          <button onclick="changeDigit(2, 1)">▲</button>
-          <div class="wheel-val" id="digit-2">0</div>
-          <button onclick="changeDigit(2, -1)">▼</button>
-        </div>
-      </div>
-      <button class="btn-primary" style="padding:10px 26px; font-size:1rem;" onclick="checkPadlock()">MỞ KHÓA</button>
-    </div>
-  </div>
-
-  <!-- CHAPTER 2 ENDING MODAL -->
-  <div id="ending-modal" class="modal-overlay">
-    <div class="modal-card" style="max-width:580px; text-align:center;">
-      <div style="font-size:0.82rem; letter-spacing:3px; color:#e0464d; margin-bottom:6px;">HẾT CHƯƠNG 2</div>
-      <h2 class="modal-title" style="font-size:1.65rem; margin-bottom:10px;">SÂN GA SƯƠNG MÙ</h2>
-      <div class="ending-quote">
-        Ánh đèn flash lóe trắng xóa cả sân ga hoang. Trong khoảnh khắc đó, Kiên thấy ngọn lửa 5 năm trước bùng lên sau ô cửa toa tàu bị khóa trái từ bên ngoài.<br><br>
-        Khi màn sương khép lại, <b>Trần Quốc Phong</b> đã biến mất không dấu vết. Trên chiếc ghế gỗ lạnh ngắt dưới ánh đèn vàng chỉ còn lại một hình nộm bằng sáp sờn cũ...<br><br>
-        <span style="color:var(--ochre);">ĐÓN CHỜ CHƯƠNG 3: <b>KHÚC ĐỘC TẤU DƯỚI ĐƯỜNG RAY</b></span>
-      </div>
-      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-        <button class="btn-primary" onclick="restartFromChapter(1)">CHƠI LẠI TỪ CHƯƠNG 1</button>
-        <button class="btn-secondary" onclick="restartFromChapter(2)">CHƠI LẠI CHƯƠNG 2</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
+<!-- ... existing code ... -->
     /* =========================================================================
-       1. ASSET MANIFEST (27 ASSETS FOR CH1 + CH2) & AUTO-LOADER
-       ========================================================================= */
-    const ASSET_MANIFEST = [
-      // Title & Platform Zero (2)
-      { key: 'bg_title',           label: 'Nền Màn Hình Tiêu Đề',     keying: false },
-      { key: 'bg_platform_zero',   label: 'Nền Sân Ga Số Không',      keying: false },
-      // Chapter 1 BGs (6)
-      { key: 'bg_car_luggage',     label: 'Nền Toa 1 (Hành Lý)',      keying: false },
-      { key: 'bg_car_coach',       label: 'Nền Toa 2 (Ghế Cứng)',     keying: false },
-      { key: 'bg_car_dining',      label: 'Nền Toa 3 (Nhà Ăn)',       keying: false },
-      { key: 'bg_car_luggage_neg', label: 'Âm Bản Toa 1',             keying: false },
-      { key: 'bg_car_coach_neg',   label: 'Âm Bản Toa 2',             keying: false },
-      { key: 'bg_car_dining_neg',  label: 'Âm Bản Toa 3',             keying: false },
-      // Chapter 2 BGs (6)
-      { key: 'bg_car_sleeper',     label: 'Nền Toa 4 (Giường Nằm)',   keying: false },
-      { key: 'bg_car_mail',        label: 'Nền Toa 5 (Bưu Chính)',    keying: false },
-      { key: 'bg_car_vip',         label: 'Nền Toa 6 (Khoang VIP)',   keying: false },
-      { key: 'bg_car_sleeper_neg', label: 'Âm Bản Toa 4',             keying: false },
-      { key: 'bg_car_mail_neg',    label: 'Âm Bản Toa 5',             keying: false },
-      { key: 'bg_car_vip_neg',     label: 'Âm Bản Toa 6',             keying: false },
-      // Sprites (6)
-      { key: 'sprite_kien_sheet',  label: 'Sprite Kiên (4 khung)',    keying: true  },
-      { key: 'sprite_benam',       label: 'Sprite Bé Nấm',            keying: true  },
-      { key: 'sprite_bactung',     label: 'Sprite Bác Bếp Tùng',      keying: true  },
-      { key: 'sprite_soatve',      label: 'Sprite Người Soát Vé',     keying: true  },
-      { key: 'sprite_bacam',       label: 'Sprite Bà Cầm',            keying: true  },
-      { key: 'sprite_phong',       label: 'Sprite Phong',             keying: true  },
-      // Portraits (6)
-      { key: 'portrait_kien',      label: 'Chân dung Kiên',           keying: false },
-      { key: 'portrait_benam',     label: 'Chân dung Bé Nấm',         keying: false },
-      { key: 'portrait_bactung',   label: 'Chân dung Bác Tùng',       keying: false },
-      { key: 'portrait_soatve',    label: 'Chân dung Soát Vé',        keying: false },
-      { key: 'portrait_bacam',     label: 'Chân dung Bà Cầm',         keying: false },
-      { key: 'portrait_phong',     label: 'Chân dung Phong',          keying: false },
-      // Item Sheets (2)
-      { key: 'items_sheet',        label: 'Sheet 7 Icon Chương 1',    keying: true  },
-      { key: 'items_ch2_sheet',    label: 'Sheet 6 Icon Chương 2',    keying: true  }
-    ];
-
-    class AssetManager {
-      constructor() {
-        this.raw = {};
-        this.processed = {};
-        this.itemSlicesCh1 = {};
-        this.itemSlicesCh2 = {};
-        this.loadedOnce = false;
-      }
-
-      get(key) {
-        return this.processed[key] || null;
-      }
-
-      getItemSlice(sheet, idx) {
-        return sheet === 2 ? this.itemSlicesCh2[idx] : this.itemSlicesCh1[idx];
-      }
-
-      /**
-       * Edge-seeded BFS Flood-Fill + Soft Anti-Aliased Edge Feathering
-       */
-      removeWhiteBackground(img) {
-        const w = img.naturalWidth || img.width;
-        const h = img.naturalHeight || img.height;
-        const off = document.createElement('canvas');
-        off.width = w; off.height = h;
-        const octx = off.getContext('2d', { willReadFrequently: true });
-        octx.drawImage(img, 0, 0);
-
-        let imgData;
-        try {
-          imgData = octx.getImageData(0, 0, w, h);
-        } catch (e) {
-          return img;
-        }
-
-        const data = imgData.data;
-        const total = w * h;
-        const visited = new Uint8Array(total);
-        const cleared = new Uint8Array(total);
-
-        const isNearWhite = (idx) => {
-          const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
-          if (a < 20) return true;
-          const minC = Math.min(r, g, b);
-          const maxC = Math.max(r, g, b);
-          return minC >= 224 && (maxC - minC) <= 28;
-        };
-
-        const queue = new Int32Array(total);
-        let head = 0, tail = 0;
-
-        const pushIfWhite = (x, y) => {
-          const p = y * w + x;
-          if (!visited[p] && isNearWhite(p * 4)) {
-            visited[p] = 1;
-            queue[tail++] = p;
-          }
-        };
-
-        for (let x = 0; x < w; x++) { pushIfWhite(x, 0); pushIfWhite(x, h - 1); }
-        for (let y = 0; y < h; y++) { pushIfWhite(0, y); pushIfWhite(w - 1, y); }
-
-        for (let y = 2; y < h - 2; y += 3) {
-          for (let x = 2; x < w - 2; x += 3) {
-            const p = y * w + x;
-            if (!visited[p]) {
-              const i = p * 4;
-              if (data[i] >= 248 && data[i + 1] >= 248 && data[i + 2] >= 248) {
-                const n1 = ((y - 1) * w + x) * 4;
-                const n2 = ((y + 1) * w + x) * 4;
-                if (data[n1] >= 245 && data[n2] >= 245) {
-                  visited[p] = 1;
-                  queue[tail++] = p;
-                }
-              }
-            }
-          }
-        }
-
-        while (head < tail) {
-          const p = queue[head++];
-          cleared[p] = 1;
-          data[p * 4 + 3] = 0;
-          const x = p % w;
-          const y = (p - x) / w;
-          if (x > 0)     { const np = p - 1; if (!visited[np] && isNearWhite(np * 4)) { visited[np] = 1; queue[tail++] = np; } }
-          if (x < w - 1) { const np = p + 1; if (!visited[np] && isNearWhite(np * 4)) { visited[np] = 1; queue[tail++] = np; } }
-          if (y > 0)     { const np = p - w; if (!visited[np] && isNearWhite(np * 4)) { visited[np] = 1; queue[tail++] = np; } }
-          if (y < h - 1) { const np = p + w; if (!visited[np] && isNearWhite(np * 4)) { visited[np] = 1; queue[tail++] = np; } }
-        }
-
-        for (let y = 1; y < h - 1; y++) {
-          for (let x = 1; x < w - 1; x++) {
-            const p = y * w + x;
-            if (cleared[p]) continue;
-            if (cleared[p - 1] || cleared[p + 1] || cleared[p - w] || cleared[p + w]) {
-              const i = p * 4;
-              const lum = (data[i] + data[i + 1] + data[i + 2]) / 3;
-              if (lum > 185) data[i + 3] = Math.max(0, Math.floor((245 - lum) * 3.8));
-            }
-          }
-        }
-
-        octx.putImageData(imgData, 0, 0);
-        return off;
-      }
-
-      trimCanvas(c) {
-        const sw = c.width, sh = c.height;
-        const cx = c.getContext('2d', { willReadFrequently: true });
-        try {
-          const d = cx.getImageData(0, 0, sw, sh).data;
-          let minX = sw, minY = sh, maxX = 0, maxY = 0, found = false;
-          for (let py = 0; py < sh; py++) {
-            for (let px = 0; px < sw; px++) {
-              if (d[(py * sw + px) * 4 + 3] > 25) {
-                if (px < minX) minX = px;
-                if (px > maxX) maxX = px;
-                if (py < minY) minY = py;
-                if (py > maxY) maxY = py;
-                found = true;
-              }
-            }
-          }
-          if (found && maxX > minX && maxY > minY) {
-            const tw = maxX - minX + 1, th = maxY - minY + 1;
-            const trimmed = document.createElement('canvas');
-            trimmed.width = tw; trimmed.height = th;
-            trimmed.getContext('2d').drawImage(c, minX, minY, tw, th, 0, 0, tw, th);
-            return trimmed;
-          }
-        } catch (e) {}
-        return c;
-      }
-
-      sliceCh1Items() {
-        this.itemSlicesCh1 = {};
-        const src = this.processed['items_sheet'];
-        if (!src) return;
-        const w = src.width || src.naturalWidth, h = src.height || src.naturalHeight;
-        const regions = [
-          { x: 0.00, y: 0.00, w: 0.28, h: 0.50 },
-          { x: 0.28, y: 0.00, w: 0.26, h: 0.50 },
-          { x: 0.54, y: 0.00, w: 0.25, h: 0.50 },
-          { x: 0.78, y: 0.00, w: 0.22, h: 0.50 },
-          { x: 0.08, y: 0.50, w: 0.29, h: 0.50 },
-          { x: 0.37, y: 0.50, w: 0.26, h: 0.50 },
-          { x: 0.63, y: 0.50, w: 0.30, h: 0.50 }
-        ];
-        regions.forEach((r, idx) => {
-          const c = document.createElement('canvas');
-          c.width = Math.floor(r.w * w); c.height = Math.floor(r.h * h);
-          c.getContext('2d').drawImage(src, Math.floor(r.x * w), Math.floor(r.y * h), c.width, c.height, 0, 0, c.width, c.height);
-          this.itemSlicesCh1[idx] = this.trimCanvas(c);
-        });
-      }
-
-      sliceCh2Items() {
-        this.itemSlicesCh2 = {};
-        const src = this.processed['items_ch2_sheet'];
-        if (!src) return;
-        const w = src.width || src.naturalWidth, h = src.height || src.naturalHeight;
-        // 2 rows x 3 cols: 0=briefcase, 1=ledger, 2=child_watch, 3=film_strip, 4=vip_key, 5=fuse
-        for (let row = 0; row < 2; row++) {
-          for (let col = 0; col < 3; col++) {
-            const idx = row * 3 + col;
-            const sw = Math.floor(w / 3), sh = Math.floor(h / 2);
-            const c = document.createElement('canvas');
-            c.width = sw; c.height = sh;
-            c.getContext('2d').drawImage(src, col * sw, row * sh, sw, sh, 0, 0, sw, sh);
-            this.itemSlicesCh2[idx] = this.trimCanvas(c);
-          }
-        }
-      }
-
-      registerImage(key, img) {
-        const meta = ASSET_MANIFEST.find(m => m.key === key);
-        if (!meta) return;
-        this.raw[key] = img;
-        this.processed[key] = meta.keying ? this.removeWhiteBackground(img) : img;
-        if (key === 'items_sheet') this.sliceCh1Items();
-        if (key === 'items_ch2_sheet') this.sliceCh2Items();
-      }
-
-      loadSingleAsset(meta) {
-        const extensions = ['png', 'jpg', 'jpeg'];
-        return new Promise((resolve) => {
-          let idx = 0;
-          const tryNext = () => {
-            if (idx >= extensions.length) { resolve(false); return; }
-            const ext = extensions[idx++];
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => { this.registerImage(meta.key, img); resolve(true); };
-            img.onerror = () => tryNext();
-            img.src = `./assets/${meta.key}.${ext}`;
-          };
-          tryNext();
-        });
-      }
-
-      async probeTitleBackground() {
-        const titleEl = document.getElementById('title-screen');
-        const tryKey = async (key) => {
-          const ok = await this.loadSingleAsset({ key, keying: false });
-          if (ok && this.raw[key]) {
-            titleEl.style.backgroundImage = `url('${this.raw[key].src}')`;
-            return true;
-          }
-          return false;
-        };
-        if (!(await tryKey('bg_title'))) {
-          await tryKey('bg_platform_zero');
-        }
-      }
-
-      async loadAllAssets(onProgress) {
-        if (this.loadedOnce) {
-          if (onProgress) onProgress(ASSET_MANIFEST.length, ASSET_MANIFEST.length);
-          return;
-        }
-        let completed = 0;
-        const total = ASSET_MANIFEST.length;
-        if (onProgress) onProgress(0, total);
-
-        await Promise.all(
-          ASSET_MANIFEST.map(async (meta) => {
-            if (!this.raw[meta.key]) await this.loadSingleAsset(meta);
-            completed++;
-            if (onProgress) onProgress(completed, total);
-          })
-        );
-        this.loadedOnce = true;
-      }
-    }
-
-    const assetManager = new AssetManager();
-
-    /* =========================================================================
-       2. WEB AUDIO API PROCEDURAL SOUND ENGINE (TRAIN + WIND + SFX)
+       2. WEB AUDIO API + OPTIONAL MP3 SOUND ENGINE (WITH LOCALSTORAGE SETTINGS)
        ========================================================================= */
     class SoundEngine {
       constructor() {
         this.ctx = null;
-        this.enabled = true;
         this.droneGain = null;
         this.windGain = null;
         this.staticNode = null;
         this.isStaticPlaying = false;
         this.onPlatform = false;
+        this.mp3Tracks = {};
+        this.settings = this.loadSettings();
+        this.enabled = !this.settings.muted;
+      }
+
+      loadSettings() {
+        try {
+          const raw = localStorage.getItem('train0214_audio_settings');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            return {
+              master: typeof parsed.master === 'number' ? parsed.master : 0.85,
+              ambience: typeof parsed.ambience === 'number' ? parsed.ambience : 0.75,
+              sfx: typeof parsed.sfx === 'number' ? parsed.sfx : 0.90,
+              muted: Boolean(parsed.muted)
+            };
+          }
+        } catch (e) {}
+        return { master: 0.85, ambience: 0.75, sfx: 0.90, muted: false };
+      }
+
+      saveSettings() {
+        try {
+          localStorage.setItem('train0214_audio_settings', JSON.stringify(this.settings));
+        } catch (e) {}
+      }
+
+      getAmbGain() { return this.enabled ? this.settings.master * this.settings.ambience : 0; }
+      getSfxGain() { return this.enabled ? this.settings.master * this.settings.sfx : 0; }
+
+      setVolume(type, normVal) {
+        this.settings[type] = Math.max(0, Math.min(1, normVal));
+        this.saveSettings();
+        this.updateAmbienceLevels();
       }
 
       init() {
@@ -1501,12 +164,40 @@
           const AudioCtx = window.AudioContext || window.webkitAudioContext;
           this.ctx = new AudioCtx();
           this.startAmbience();
+          this.probeOptionalAudio();
         }
         if (this.ctx.state === 'suspended') this.ctx.resume();
       }
 
+      probeOptionalAudio() {
+        const files = ['amb_train_loop', 'amb_platform_wind', 'sfx_shutter', 'sfx_horn', 'sfx_footstep'];
+        files.forEach(name => {
+          const a = new Audio(`./assets/audio/${name}.mp3`);
+          a.preload = 'auto';
+          if (name.startsWith('amb_')) a.loop = true;
+          a.addEventListener('canplaythrough', () => {
+            this.mp3Tracks[name] = a;
+            this.updateAmbienceLevels();
+          }, { once: true });
+        });
+      }
+
+      playOptionalSfx(name) {
+        const track = this.mp3Tracks[name];
+        const vol = this.getSfxGain();
+        if (!track || vol <= 0) return false;
+        try {
+          const clone = track.cloneNode();
+          clone.volume = vol;
+          clone.play().catch(() => {});
+          return true;
+        } catch (e) { return false; }
+      }
+
       toggle() {
         this.enabled = !this.enabled;
+        this.settings.muted = !this.enabled;
+        this.saveSettings();
         this.updateAmbienceLevels();
         if (!this.enabled) this.setStaticLock(false);
         return this.enabled;
@@ -1518,10 +209,30 @@
       }
 
       updateAmbienceLevels() {
+        const amb = this.getAmbGain();
+        // Optional MP3 Ambience
+        const trainMp3 = this.mp3Tracks['amb_train_loop'];
+        const windMp3 = this.mp3Tracks['amb_platform_wind'];
+        const useTrainMp3 = Boolean(trainMp3);
+        const useWindMp3 = Boolean(windMp3);
+
+        if (trainMp3) {
+          const shouldPlay = amb > 0 && !this.onPlatform && (!game || game.chapter === 1);
+          trainMp3.volume = amb * 0.65;
+          if (shouldPlay && trainMp3.paused) trainMp3.play().catch(() => {});
+          else if (!shouldPlay && !trainMp3.paused) trainMp3.pause();
+        }
+        if (windMp3) {
+          const shouldPlay = amb > 0 && this.onPlatform;
+          windMp3.volume = amb * 0.7;
+          if (shouldPlay && windMp3.paused) windMp3.play().catch(() => {});
+          else if (!shouldPlay && !windMp3.paused) windMp3.pause();
+        }
+
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        if (this.droneGain) this.droneGain.gain.setTargetAtTime(this.enabled && !this.onPlatform ? 0.042 : 0, t, 0.25);
-        if (this.windGain) this.windGain.gain.setTargetAtTime(this.enabled && this.onPlatform ? 0.09 : 0, t, 0.35);
+        if (this.droneGain) this.droneGain.gain.setTargetAtTime(!useTrainMp3 && !this.onPlatform ? 0.055 * amb : 0, t, 0.25);
+        if (this.windGain) this.windGain.gain.setTargetAtTime(!useWindMp3 && this.onPlatform ? 0.12 * amb : 0, t, 0.35);
       }
 
       createNoiseBuffer(seconds = 2.0) {
@@ -1533,18 +244,17 @@
       }
 
       startAmbience() {
-        // Train Drone
+        const amb = this.getAmbGain();
         const osc = this.ctx.createOscillator();
         const filter = this.ctx.createBiquadFilter();
         const gain = this.ctx.createGain();
         osc.type = 'triangle'; osc.frequency.value = 43;
         filter.type = 'lowpass'; filter.frequency.value = 100;
-        gain.gain.value = this.enabled ? 0.042 : 0;
+        gain.gain.value = 0.055 * amb;
         osc.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
         osc.start();
         this.droneGain = gain;
 
-        // Platform Zero Eerie Wind
         const windSrc = this.ctx.createBufferSource();
         windSrc.buffer = this.createNoiseBuffer(3.0);
         windSrc.loop = true;
@@ -1556,17 +266,18 @@
         windSrc.start();
         this.windGain = wGain;
 
-        // Rhythmic train rail clatter
         let beat = 0;
         setInterval(() => {
-          if (!this.enabled || !this.ctx || this.ctx.state !== 'running' || this.onPlatform) return;
-          if (game && game.chapter === 2) return; // Train halted at Platform Zero in Ch2
+          if (!this.enabled || !this.ctx || this.ctx.state !== 'running' || this.onPlatform || this.mp3Tracks['amb_train_loop']) return;
+          if (game && game.chapter === 2) return;
           if (beat === 0 || beat === 1) this.playRailClack(beat === 0 ? 1.0 : 0.65);
           beat = (beat + 1) % 6;
         }, 240);
       }
 
       playRailClack(intensity = 1.0) {
+        const amb = this.getAmbGain();
+        if (amb <= 0) return;
         try {
           const now = this.ctx.currentTime;
           const src = this.ctx.createBufferSource();
@@ -1574,7 +285,7 @@
           const bp = this.ctx.createBiquadFilter();
           bp.type = 'bandpass'; bp.frequency.value = 130 + Math.random() * 35;
           const g = this.ctx.createGain();
-          g.gain.setValueAtTime(0.05 * intensity, now);
+          g.gain.setValueAtTime(0.065 * intensity * amb, now);
           g.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
           src.connect(bp); bp.connect(g); g.connect(this.ctx.destination);
           src.start(now);
@@ -1582,47 +293,52 @@
       }
 
       playFootstep() {
-        if (!this.enabled || !this.ctx) return;
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
+        if (this.playOptionalSfx('sfx_footstep')) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime((this.onPlatform ? 115 : 88) + Math.random() * 20, now);
         osc.frequency.exponentialRampToValueAtTime(32, now + 0.065);
-        g.gain.setValueAtTime(0.085, now);
+        g.gain.setValueAtTime(0.11 * sfx, now);
         g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
         osc.connect(g); g.connect(this.ctx.destination);
         osc.start(now); osc.stop(now + 0.075);
       }
 
       playVoiceBlip(speaker = 'Kiên') {
-        if (!this.enabled || !this.ctx) return;
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
-        let freq = 290;
-        if (speaker.includes('Nấm')) freq = 520;
-        else if (speaker.includes('Tùng')) freq = 195;
-        else if (speaker.includes('Cầm')) freq = 370;
-        else if (speaker.includes('Phong')) freq = 330;
-        else if (speaker.includes('Soát Vé') || speaker.includes('Loa')) freq = 120;
+        let freq = 275;
+        if (speaker.includes('Nấm')) freq = 540;
+        else if (speaker.includes('Tùng')) freq = 185;
+        else if (speaker.includes('Cầm')) freq = 365;
+        else if (speaker.includes('Phong')) freq = 340;
+        else if (speaker.includes('Soát Vé') || speaker.includes('Loa')) freq = 115;
         osc.type = (speaker.includes('Soát Vé') || speaker.includes('Loa')) ? 'sawtooth' : 'square';
-        osc.frequency.setValueAtTime(freq + Math.random() * 35, now);
-        g.gain.setValueAtTime(0.022, now);
+        osc.frequency.setValueAtTime(freq + Math.random() * 32, now);
+        g.gain.setValueAtTime(0.028 * sfx, now);
         g.gain.exponentialRampToValueAtTime(0.001, now + 0.028);
         osc.connect(g); g.connect(this.ctx.destination);
         osc.start(now); osc.stop(now + 0.03);
       }
 
       playShutter() {
-        if (!this.enabled || !this.ctx) return;
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
+        if (this.playOptionalSfx('sfx_shutter')) return;
         const now = this.ctx.currentTime;
         const src = this.ctx.createBufferSource();
         src.buffer = this.createNoiseBuffer(0.11);
         const hp = this.ctx.createBiquadFilter();
         hp.type = 'highpass'; hp.frequency.value = 1100;
         const g = this.ctx.createGain();
-        g.gain.setValueAtTime(0.28, now);
+        g.gain.setValueAtTime(0.32 * sfx, now);
         g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
         src.connect(hp); hp.connect(g); g.connect(this.ctx.destination);
         src.start(now);
@@ -1633,7 +349,7 @@
         whine.frequency.setValueAtTime(680, now + 0.08);
         whine.frequency.exponentialRampToValueAtTime(3400, now + 1.4);
         wg.gain.setValueAtTime(0.001, now + 0.08);
-        wg.gain.linearRampToValueAtTime(0.03, now + 0.35);
+        wg.gain.linearRampToValueAtTime(0.036 * sfx, now + 0.35);
         wg.gain.exponentialRampToValueAtTime(0.001, now + 1.45);
         whine.connect(wg); wg.connect(this.ctx.destination);
         whine.start(now + 0.08); whine.stop(now + 1.5);
@@ -1641,7 +357,8 @@
 
       setStaticLock(active) {
         if (!this.ctx) return;
-        if (active && this.enabled && !this.isStaticPlaying) {
+        const sfx = this.getSfxGain();
+        if (active && sfx > 0 && !this.isStaticPlaying) {
           this.isStaticPlaying = true;
           const src = this.ctx.createBufferSource();
           src.buffer = this.createNoiseBuffer(2.0);
@@ -1649,11 +366,11 @@
           const bp = this.ctx.createBiquadFilter();
           bp.type = 'bandpass'; bp.frequency.value = 2300; bp.Q.value = 1.6;
           const g = this.ctx.createGain();
-          g.gain.value = 0.045;
+          g.gain.value = 0.055 * sfx;
           src.connect(bp); bp.connect(g); g.connect(this.ctx.destination);
           src.start();
           this.staticNode = src;
-        } else if ((!active || !this.enabled) && this.isStaticPlaying) {
+        } else if ((!active || sfx <= 0) && this.isStaticPlaying) {
           this.isStaticPlaying = false;
           try { if (this.staticNode) this.staticNode.stop(); } catch (e) {}
           this.staticNode = null;
@@ -1661,21 +378,24 @@
       }
 
       playTicketPunch() {
-        if (!this.enabled || !this.ctx) return;
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(1600, now);
         osc.frequency.exponentialRampToValueAtTime(200, now + 0.065);
-        g.gain.setValueAtTime(0.24, now);
+        g.gain.setValueAtTime(0.28 * sfx, now);
         g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
         osc.connect(g); g.connect(this.ctx.destination);
         osc.start(now); osc.stop(now + 0.075);
       }
 
       playTrainWhistle() {
-        if (!this.enabled || !this.ctx) return;
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
+        if (this.playOptionalSfx('sfx_horn')) return;
         const now = this.ctx.currentTime;
         [106, 126, 152].forEach(f => {
           const osc = this.ctx.createOscillator();
@@ -1686,7 +406,7 @@
           osc.frequency.linearRampToValueAtTime(f * 0.94, now + 2.3);
           lp.type = 'lowpass'; lp.frequency.value = 440;
           g.gain.setValueAtTime(0.001, now);
-          g.gain.linearRampToValueAtTime(0.058, now + 0.35);
+          g.gain.linearRampToValueAtTime(0.072 * sfx, now + 0.35);
           g.gain.exponentialRampToValueAtTime(0.001, now + 2.4);
           osc.connect(lp); lp.connect(g); g.connect(this.ctx.destination);
           osc.start(now); osc.stop(now + 2.5);
@@ -1694,27 +414,82 @@
       }
 
       playHorrorSwell() {
-        if (!this.enabled || !this.ctx) return;
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
         const now = this.ctx.currentTime;
         [62, 66, 185].forEach(f => {
           const osc = this.ctx.createOscillator();
           const g = this.ctx.createGain();
           osc.type = 'sawtooth'; osc.frequency.value = f;
           g.gain.setValueAtTime(0.001, now);
-          g.gain.linearRampToValueAtTime(0.07, now + 0.45);
+          g.gain.linearRampToValueAtTime(0.085 * sfx, now + 0.45);
           g.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
           osc.connect(g); g.connect(this.ctx.destination);
           osc.start(now); osc.stop(now + 2.1);
         });
       }
 
+      playHorrorSting() {
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        [520, 554, 780, 110].forEach(f => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = f < 200 ? 'triangle' : 'sawtooth';
+          osc.frequency.setValueAtTime(f, now);
+          osc.frequency.exponentialRampToValueAtTime(f * 0.86, now + 0.85);
+          g.gain.setValueAtTime(0.001, now);
+          g.gain.linearRampToValueAtTime((f < 200 ? 0.22 : 0.06) * sfx, now + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.start(now); osc.stop(now + 0.95);
+        });
+      }
+
+      playHeartbeat() {
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        [0, 0.22, 0.72, 0.94].forEach((offset, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(idx % 2 === 0 ? 64 : 52, now + offset);
+          osc.frequency.exponentialRampToValueAtTime(28, now + offset + 0.14);
+          g.gain.setValueAtTime(0.24 * sfx, now + offset);
+          g.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.16);
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.start(now + offset); osc.stop(now + offset + 0.18);
+        });
+      }
+
+      playBubbling() {
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        for (let i = 0; i < 6; i++) {
+          const t = now + i * 0.12;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(160 + Math.random() * 140, t);
+          osc.frequency.exponentialRampToValueAtTime(480 + Math.random() * 160, t + 0.09);
+          g.gain.setValueAtTime(0.08 * sfx, t);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.start(t); osc.stop(t + 0.11);
+        }
+      }
+
       playClick(pitch = 540) {
-        if (!this.enabled || !this.ctx) return;
+        const sfx = this.getSfxGain();
+        if (sfx <= 0 || !this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
         osc.type = 'sine'; osc.frequency.setValueAtTime(pitch, now);
-        g.gain.setValueAtTime(0.07, now);
+        g.gain.setValueAtTime(0.09 * sfx, now);
         g.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
         osc.connect(g); g.connect(this.ctx.destination);
         osc.start(now); osc.stop(now + 0.05);
@@ -1722,169 +497,11 @@
     }
 
     const sound = new SoundEngine();
-
-    /* =========================================================================
-       3. ITEM DATABASE (CH1 + CH2)
-       ========================================================================= */
-    const ITEM_DB = {
-      // Chapter 1 Items (sheet 1)
-      blank_ticket: {
-        id: 'blank_ticket', sheet: 1, sheetIdx: 1,
-        name: 'Tấm Vé Trống',
-        desc: 'Tấm vé giấy cũ rách mép, chưa ghi tên ga đến.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="4" y="10" width="32" height="20" fill="#c7b589" stroke="#080908" stroke-width="2.2"/><text x="20" y="23" font-size="8" fill="#2c2418" text-anchor="middle" font-weight="bold">02:14</text></svg>`
-      },
-      broken_camera: {
-        id: 'broken_camera', sheet: 1, sheetIdx: 0,
-        name: 'Máy Ảnh (Hỏng cò)',
-        desc: 'Máy ảnh kính nứt, cò bấm kẹt cứng vì rỉ sét. Cần dầu máy.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="5" y="12" width="30" height="20" fill="#464b47" stroke="#080908" stroke-width="2.2"/><circle cx="20" cy="22" r="7" fill="#121615" stroke="#858a84" stroke-width="2"/></svg>`
-      },
-      fixed_camera: {
-        id: 'fixed_camera', sheet: 1, sheetIdx: 0,
-        name: 'Máy Ảnh Kính Nứt',
-        desc: 'Nhấn [V] hoặc Chuột phải để bật khung ngắm âm bản 4:3.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="5" y="12" width="30" height="20" fill="#3b453b" stroke="#080908" stroke-width="2.2"/><circle cx="20" cy="22" r="7" fill="#121c18" stroke="#dfc374" stroke-width="2"/></svg>`
-      },
-      hairpin: {
-        id: 'hairpin', sheet: 1, sheetIdx: 3,
-        name: 'Kẹp Tóc',
-        desc: 'Kẹp tóc thép mảnh đàn hồi. Có thể ghép thay dây cót đồng hồ.',
-        svg: `<svg viewBox="0 0 40 40"><path d="M8 26 L30 14 C33 12 35 16 31 18 L12 29" fill="none" stroke="#c5ccd6" stroke-width="2.6" stroke-linecap="round"/></svg>`
-      },
-      broken_watch: {
-        id: 'broken_watch', sheet: 1, sheetIdx: 2,
-        name: 'Đồng Hồ Hỏng',
-        desc: 'Đồng hồ quả quýt bị gãy lò xo bên trong. Ghép với Kẹp Tóc.',
-        svg: `<svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="11" fill="#8f7245" stroke="#080908" stroke-width="2.2"/><circle cx="20" cy="22" r="8" fill="#d8cfb8"/></svg>`
-      },
-      working_watch: {
-        id: 'working_watch', sheet: 1, sheetIdx: 2,
-        name: 'Đồng Hồ Đã Sửa',
-        desc: 'Chạy tích tắc đều đặn! Đem đưa Bác Bếp Tùng ở Toa 3.',
-        svg: `<svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="11" fill="#c4a962" stroke="#080908" stroke-width="2.2"/><circle cx="20" cy="22" r="8" fill="#f0e8d5"/></svg>`
-      },
-      oil_bottle: {
-        id: 'oil_bottle', sheet: 1, sheetIdx: 4,
-        name: 'Lọ Dầu Máy',
-        desc: 'Dầu bôi trơn. Ghép với [Máy Ảnh (Hỏng cò)] để sửa.',
-        svg: `<svg viewBox="0 0 40 40"><path d="M16 14 L24 14 L27 32 L13 32 Z" fill="#6b4423" stroke="#080908" stroke-width="2.2"/></svg>`
-      },
-      photo_hands: {
-        id: 'photo_hands', sheet: 1, sheetIdx: 6,
-        name: 'Polaroid (2-1-4)',
-        desc: 'Ảnh dị thường Toa 1. Bấm [XEM] để phóng to mã số 2-1-4.',
-        isPolaroid: true,
-        polaroidType: 'ch1_hands',
-        caption: 'Hàng chục bàn tay xám chỉ vào Rương Quạ Sắt. Dưới sàn khắc rõ: 2 - 1 - 4.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="7" y="5" width="26" height="30" fill="#e3dccb" stroke="#080908" stroke-width="2"/><rect x="10" y="8" width="20" height="17" fill="#17241e"/></svg>`
-      },
-      dry_stamp: {
-        id: 'dry_stamp', sheet: 1, sheetIdx: 5,
-        name: 'Con Dấu Khô Mực',
-        desc: 'Con dấu "GA ĐÁ TRẮNG" đã khô cong. Cần chấm mực đen ở Toa 3.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="8" y="24" width="24" height="7" fill="#5c3a21" stroke="#080908" stroke-width="2"/></svg>`
-      },
-      inked_stamp: {
-        id: 'inked_stamp', sheet: 1, sheetIdx: 5,
-        name: 'Con Dấu Có Mực',
-        desc: 'Đã thấm mực đen kịt! Ghép với [Tấm Vé Trống].',
-        svg: `<svg viewBox="0 0 40 40"><rect x="8" y="24" width="24" height="7" fill="#5c3a21" stroke="#dfc374" stroke-width="2"/></svg>`
-      },
-      stamped_ticket: {
-        id: 'stamped_ticket', sheet: 1, sheetIdx: 1,
-        name: 'Vé Ga Đá Trắng',
-        desc: 'Vé Ga Đá Trắng (02:14) đã đóng dấu & bấm lỗ ngôi sao.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="4" y="10" width="32" height="20" fill="#dfd5be" stroke="#c22e35" stroke-width="2.2"/></svg>`
-      },
-
-      // Chapter 2 Items (sheet 2: 0=briefcase, 1=ledger, 2=child_watch, 3=film_strip, 4=vip_key, 5=fuse)
-      fuse: {
-        id: 'fuse', sheet: 2, sheetIdx: 5,
-        name: 'Cầu Chì Thủy Tinh',
-        desc: 'Bà Cầm trao cho. Lắp vào Hộp Cầu Chì ở Toa 4 để mở cửa sang Toa 5.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="8" y="15" width="24" height="10" rx="3" fill="#8fa8a0" stroke="#080908" stroke-width="2"/><rect x="8" y="15" width="6" height="10" fill="#9c6f3e"/><rect x="26" y="15" width="6" height="10" fill="#9c6f3e"/></svg>`
-      },
-      film_strip: {
-        id: 'film_strip', sheet: 2, sheetIdx: 3,
-        name: 'Dải Phim Âm Bản',
-        desc: 'Cuộn phim cũ chưa tráng trên bàn điện báo. Mang vào Phòng Tối (rèm đỏ Toa 5) để tráng.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="6" y="11" width="28" height="18" fill="#222" stroke="#080908" stroke-width="2"/><rect x="11" y="15" width="7" height="10" fill="#555"/><rect x="22" y="15" width="7" height="10" fill="#555"/></svg>`
-      },
-      vip_key: {
-        id: 'vip_key', sheet: 2, sheetIdx: 4,
-        name: 'Chìa Khóa VIP',
-        desc: 'Chìa khóa đồng cổ chạm khắc tinh xảo. Dùng mở cửa sang Toa 6 (Khoang VIP).',
-        svg: `<svg viewBox="0 0 40 40"><circle cx="13" cy="20" r="6" fill="none" stroke="#d4b44a" stroke-width="3"/><line x1="19" y1="20" x2="34" y2="20" stroke="#d4b44a" stroke-width="3"/><line x1="29" y1="20" x2="29" y2="26" stroke="#d4b44a" stroke-width="3"/></svg>`
-      },
-      photo_02_vip: {
-        id: 'photo_02_vip', sheet: 1, sheetIdx: 6,
-        name: 'Polaroid (Toa Cháy)',
-        desc: 'Ảnh chụp dị thường Khoang VIP: ngọn lửa 5 năm trước và cánh cửa bị khóa trái.',
-        isPolaroid: true,
-        polaroidType: 'ch2_vip',
-        caption: '5 năm trước: Phong khóa trái cửa toa đang cháy để độc chiếm lối thoát.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="7" y="5" width="26" height="30" fill="#e3dccb" stroke="#080908" stroke-width="2"/><rect x="10" y="8" width="20" height="17" fill="#3a1614"/></svg>`
-      },
-      ledger: {
-        id: 'ledger', sheet: 2, sheetIdx: 1,
-        name: 'Sổ Nợ Đẫm Máu',
-        desc: 'Cuốn sổ rơi ra từ vali của Phong, ghi đầy những khoản tiền chiếm đoạt từ nạn nhân.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="10" y="6" width="20" height="28" fill="#3b2621" stroke="#080908" stroke-width="2"/><circle cx="22" cy="18" r="4" fill="#9c1c22"/></svg>`
-      },
-      child_watch: {
-        id: 'child_watch', sheet: 2, sheetIdx: 2,
-        name: 'Đồng Hồ Trẻ Em Vỡ',
-        desc: 'Chiếc đồng hồ đeo tay trẻ em vỡ mặt kính, kim chết cứng ở 02:14.',
-        svg: `<svg viewBox="0 0 40 40"><rect x="16" y="4" width="8" height="32" fill="#4a4036"/><circle cx="20" cy="20" r="9" fill="#d8cfb8" stroke="#080908" stroke-width="2"/></svg>`
-      }
-    };
-
-    /* =========================================================================
-       4. SCENE DEFINITIONS (7 SCENES ACROSS CH1 & CH2)
-       ========================================================================= */
-    const CW = 1280, CH = 720;
-
-    const SCENES = {
-      // --- CHAPTER 1 ---
-      car_luggage: {
-        id: 'car_luggage', name: 'Toa 1: Toa Hành Lý', bgKey: 'bg_car_luggage', negKey: 'bg_car_luggage_neg', floorY: 615,
-        anomalies: [{ id: 'anom_hands', x: 580, y: 455, radius: 115, flag: 'capturedHands', photoId: 'photo_hands', toast: 'TÁCH! Đã chụp đám bàn tay xám & mã số 2-1-4. Nhận [Polaroid (2-1-4)]!' }],
-        hotspots: [
-          { id: 'crow_chest',   x: 310,  y: 550, w: 140, label: 'Rương Quạ Sắt', visible: () => true },
-          { id: 'crates_pile',  x: 580,  y: 465, w: 220, label: 'Đống thùng gỗ & vali', visible: () => true },
-          { id: 'tool_cabinet', x: 1085, y: 490, w: 130, label: 'Tủ dụng cụ rỉ sét', visible: () => true },
-          { id: 'exit_to_car2', x: 1225, y: 430, w: 95,  label: 'Sang Toa 2 ▸', isExit: true, visible: () => true }
-        ]
-      },
-      car_coach: {
-        id: 'car_coach', name: 'Toa 2: Toa Ghế Cứng', bgKey: 'bg_car_coach', negKey: 'bg_car_coach_neg', floorY: 595,
-        anomalies: [{ id: 'anom_clock', x: 830, y: 235, radius: 110, flag: 'sawClockHint', photoId: null, toast: 'TÁCH! Hiện rõ dòng chữ cào: "HẮN GIẤU CON DẤU..."' }],
-        hotspots: [
-          { id: 'exit_to_car1', x: 65,   y: 430, w: 95,  label: '◂ Sang Toa 1', isExit: true, visible: () => true },
-          { id: 'seat_14',      x: 245,  y: 480, w: 130, label: 'Ghế gỗ số 14', visible: () => true },
-          { id: 'clock_0214',   x: 830,  y: 230, w: 110, label: 'Đồng hồ 02:14', visible: () => true },
-          { id: 'npc_benam',    x: 945,  y: 495, w: 100, label: 'Bé Nấm', visible: () => true },
-          { id: 'npc_soatve',   x: 1060, y: 455, w: 115, label: 'Người Soát Vé', visible: () => game.flags.inspectorSpawned && !game.flags.ch1Complete },
-          { id: 'exit_to_car3', x: 1225, y: 430, w: 95,  label: 'Sang Toa 3 ▸', isExit: true, visible: () => true }
-        ]
-      },
-      car_dining: {
-        id: 'car_dining', name: 'Toa 3: Toa Nhà Ăn', bgKey: 'bg_car_dining', negKey: 'bg_car_dining_neg', floorY: 595,
-        anomalies: [{ id: 'anom_soup', x: 920, y: 385, radius: 105, flag: 'inspectedSoupNegative', photoId: null, toast: 'TÁCH! Thứ trong nồi là mực đen đặc quánh! Có thể chấm con dấu vào đây!' }],
-        hotspots: [
-          { id: 'exit_to_car2_from_3', x: 65,   y: 430, w: 95,  label: '◂ Sang Toa 2', isExit: true, visible: () => true },
-          { id: 'dining_tables',       x: 385,  y: 490, w: 160, label: 'Bàn ăn ố bẩn', visible: () => true },
-          { id: 'npc_bactung',         x: 755,  y: 470, w: 120, label: 'Bác Bếp Tùng', visible: () => true },
-          { id: 'soup_pot',            x: 925,  y: 420, w: 135, label: 'Nồi súp hành tây', visible: () => true },
-          { id: 'door_car4',           x: 1220, y: 430, w: 100, label: () => game.flags.ch1Complete ? 'Sang Toa 4 ▸' : 'Cửa Toa 4 [KHÓA]', isExit: true, visible: () => true }
-        ]
-      },
-
+// ... existing code ...
       // --- CHAPTER 2 ---
       car_sleeper: {
         id: 'car_sleeper', name: 'Toa 4: Toa Giường Nằm', bgKey: 'bg_car_sleeper', negKey: 'bg_car_sleeper_neg', floorY: 585,
-        anomalies: [{ id: 'anom_sleeper', x: 640, y: 390, radius: 125, flag: 'ch2Saw0412', photoId: null, toast: 'TÁCH! Nốt nhạc ma quái & dãy số 04-12 hiện lên trên cửa 4B!' }],
+        anomalies: [{ id: 'anom_sleeper', x: 640, y: 390, radius: 135, flag: 'ch2Saw0412', photoId: null, toast: 'TÁCH! Nốt nhạc ma quái & dãy số 04-12 hiện rõ trên cửa 4B!' }],
         hotspots: [
           { id: 'fuse_box',     x: 420,  y: 380, w: 115, label: 'Hộp Cầu Chì', visible: () => true },
           { id: 'door_4b',      x: 645,  y: 420, w: 120, label: 'Khoang 4B', visible: () => true },
@@ -1894,7 +511,10 @@
       },
       car_mail: {
         id: 'car_mail', name: 'Toa 5: Toa Bưu Chính', bgKey: 'bg_car_mail', negKey: 'bg_car_mail_neg', floorY: 585,
-        anomalies: [{ id: 'anom_mail', x: 930, y: 330, radius: 125, flag: 'ch2SawMailBoard', photoId: null, toast: 'TÁCH! Những sợi chỉ đỏ nối tới khuôn mặt bóng đen trên bảng chứng cứ...' }],
+        anomalies: [
+          { id: 'anom_mail', x: 930, y: 330, radius: 125, flag: 'ch2SawMailBoard', photoId: null, toast: 'TÁCH! Những sợi chỉ đỏ nối tới khuôn mặt bóng đen trên bảng chứng cứ...' },
+          { id: 'anom_mail_curtain', x: 1145, y: 390, radius: 115, flag: 'reacted_mail_ghost', photoId: null, toast: 'TÁCH! Đôi mắt trắng sau tấm rèm đỏ vụt tắt trong bóng tối!' }
+        ],
         hotspots: [
           { id: 'exit_to_car4_from_5', x: 65,   y: 430, w: 95,  label: '◂ Sang Toa 4', isExit: true, visible: () => true },
           { id: 'morse_desk',          x: 455,  y: 450, w: 150, label: 'Bàn Điện Báo', visible: () => true },
@@ -1905,57 +525,23 @@
       },
       car_vip: {
         id: 'car_vip', name: 'Toa 6: Toa Khoang VIP', bgKey: 'bg_car_vip', negKey: 'bg_car_vip_neg', floorY: 590,
-        anomalies: [{ id: 'anom_vip', x: 640, y: 420, radius: 165, flag: 'ch2CapturedVip', photoId: 'photo_02_vip', toast: 'TÁCH! Ngọn lửa 5 năm trước bùng lên từ chiếc vali da của Phong!' }],
+        anomalies: [{ id: 'anom_vip', x: 640, y: 420, radius: 175, flag: 'ch2CapturedVip', photoId: 'photo_02_vip', toast: 'TÁCH! Ngọn lửa 5 năm trước bùng lên từ chiếc vali da của Phong!' }],
         hotspots: [
-          { id: 'exit_to_car5_from_6', x: 65,   y: 430, w: 95,  label: '◂ Sang Toa 5', isExit: true, visible: () => true },
-          { id: 'vip_briefcase',       x: 520,  y: 515, w: 120, label: 'Vali Da của Phong', visible: () => true },
-          { id: 'npc_phong_vip',       x: 840,  y: 460, w: 120, label: 'Phong', visible: () => !game.flags.ch2PhongFled },
-          { id: 'exit_to_platform',    x: 1220, y: 430, w: 100, label: 'Ra Sân Ga Sương Mù ▸', isExit: true, visible: () => game.flags.ch2PhongFled }
-        ]
-      },
-      platform_zero: {
-        id: 'platform_zero', name: 'Sân Ga Số Không — Ga Đá Trắng', bgKey: 'bg_platform_zero', negKey: 'bg_platform_zero', floorY: 560,
-        anomalies: [{ id: 'anom_platform_phong', x: 520, y: 435, radius: 150, flag: 'ch2BanishedPhong', photoId: null, toast: 'TÁCH! Ánh flash xé toạc màn sương — ký ức toa tàu cháy bùng lên!' }],
-        hotspots: [
-          { id: 'npc_phong_platform', x: 520, y: 445, w: 140, label: () => game.flags.ch2BanishedPhong ? 'Hình Nộm Bằng Sáp' : 'Phong (Đang hoảng loạn)', visible: () => true },
-          { id: 'station_sign',       x: 990, y: 360, w: 160, label: 'Biển Ga Đá Trắng', visible: () => true }
-        ]
-      }
-    };
-
-    /* =========================================================================
-       5. GAME STATE
-       ========================================================================= */
-    let game = null;
-
-    function createInitialState(startChapter = 1) {
-      const isCh2 = startChapter === 2;
-      return {
-        started: false,
-        ended: false,
-        chapter: startChapter,
-        sceneId: isCh2 ? 'car_sleeper' : 'car_coach',
-        player: { x: isCh2 ? 150 : 260, facing: 1, animTime: 0, frame: 0, stepTimer: 0, moving: false },
-        inspectorX: 1260,
-        keys: { left: false, right: false },
-        mouse: { x: 640, y: 360 },
-        lens: { unlocked: isCh2, active: false, vx: 640, vy: 360, lockedAnomaly: null, flashAlpha: 0, cooldown: 0 },
-        fade: { alpha: 0, dir: 0, callback: null },
-        flickerTimer: 0,
-        shakeTimer: 0,
-        time: 0,
-        inventoryOpen: true,
-        inventory: isCh2 ? ['stamped_ticket', 'fixed_camera'] : ['blank_ticket', 'broken_camera'],
-        selectedItem: null,
-        combineSource: null,
-        activeHotspot: null,
-        dialogue: { active: false, queue: [], index: 0, charIndex: 0, timer: 0, onComplete: null },
+// ... existing code ...
         flags: {
           // Ch1
           metBeNam: isCh2, metChef: isCh2, pickedHairpin: isCh2, pickedBrokenWatch: isCh2,
           gaveWatch: isCh2, fixedCamera: isCh2, sawClockHint: isCh2, capturedHands: isCh2,
           openedChest: isCh2, inspectedSoupNegative: isCh2, inkedStamp: isCh2,
           stampedTicket: isCh2, inspectorSpawned: isCh2, ch1Complete: isCh2,
+          // First-Sight Horror Reactions
+          seenCameraFirstOpen: isCh2,
+          reacted_clock_ghost: isCh2,
+          reacted_hands_ghost: isCh2,
+          reacted_soup_ghost: isCh2,
+          reacted_sleeper_ghost: false,
+          reacted_mail_ghost: false,
+          reacted_vip_ghost: false,
           // Ch2
           ch2MetBaCam: false, ch2Saw0412: false, ch2GotFuse: false, ch2FuseFixed: false,
           ch2GotFilm: false, ch2SawMailBoard: false, ch2DevelopedFilm: false, ch2VipUnlocked: false,
@@ -1964,208 +550,23 @@
         padlockDigits: [0, 0, 0]
       };
     }
-
-    /* =========================================================================
-       6. HUD ICONS & PORTRAIT RENDERING
-       ========================================================================= */
-    function drawHudIcons() {
-      const camC = document.getElementById('hud-cam-canvas');
-      const cctx = camC.getContext('2d');
-      cctx.clearRect(0, 0, camC.width, camC.height);
-      const camSlice = assetManager.getItemSlice(1, 0);
-      if (camSlice) {
-        const s = Math.min(114 / camSlice.width, 84 / camSlice.height);
-        cctx.drawImage(camSlice, (120 - camSlice.width * s) / 2, (90 - camSlice.height * s) / 2, camSlice.width * s, camSlice.height * s);
-      } else {
-        cctx.fillStyle = '#474c48'; cctx.strokeStyle = '#080908'; cctx.lineWidth = 3.5;
-        cctx.beginPath(); cctx.roundRect(14, 24, 92, 54, 4); cctx.fill(); cctx.stroke();
-        cctx.fillStyle = '#141817'; cctx.beginPath(); cctx.arc(62, 51, 20, 0, Math.PI * 2); cctx.fill(); cctx.stroke();
-        cctx.strokeStyle = '#e6dfd0'; cctx.lineWidth = 2;
-        cctx.beginPath(); cctx.moveTo(49, 40); cctx.lineTo(74, 62); cctx.stroke();
-      }
-
-      const ticC = document.getElementById('hud-ticket-canvas');
-      const tctx = ticC.getContext('2d');
-      tctx.clearRect(0, 0, ticC.width, ticC.height);
-      const ticSlice = assetManager.getItemSlice(1, 1);
-      if (ticSlice) {
-        const s = Math.min(122 / ticSlice.width, 78 / ticSlice.height);
-        tctx.drawImage(ticSlice, (130 - ticSlice.width * s) / 2, (86 - ticSlice.height * s) / 2, ticSlice.width * s, ticSlice.height * s);
-      } else {
-        tctx.fillStyle = '#cbb98c'; tctx.strokeStyle = '#080908'; tctx.lineWidth = 3.5;
-        tctx.fillRect(10, 14, 110, 58); tctx.strokeRect(10, 14, 110, 58);
-        tctx.fillStyle = '#2c2418'; tctx.font = 'bold 16px "Special Elite", monospace';
-        tctx.fillText('02:14', 22, 46);
-      }
-
-      if (game && game.flags.stampedTicket) {
-        tctx.save();
-        tctx.strokeStyle = '#b8252c'; tctx.fillStyle = '#b8252c'; tctx.lineWidth = 3;
-        tctx.beginPath(); tctx.arc(60, 44, 19, 0, Math.PI * 2); tctx.stroke();
-        tctx.font = 'bold 11px "Special Elite", monospace'; tctx.textAlign = 'center';
-        tctx.fillText('ĐÁ TRẮNG', 60, 48);
-        tctx.restore();
-      }
-    }
-
-    function drawPortrait(speaker) {
-      const pCanvas = document.getElementById('portrait-canvas');
-      const pc = pCanvas.getContext('2d');
-      pc.clearRect(0, 0, 140, 140);
-
-      let assetKey = null;
-      if (speaker === 'Kiên') assetKey = 'portrait_kien';
-      else if (speaker === 'Bé Nấm') assetKey = 'portrait_benam';
-      else if (speaker === 'Bác Bếp Tùng') assetKey = 'portrait_bactung';
-      else if (speaker === 'Người Soát Vé') assetKey = 'portrait_soatve';
-      else if (speaker === 'Bà Cầm') assetKey = 'portrait_bacam';
-      else if (speaker === 'Phong') assetKey = 'portrait_phong';
-
-      const img = assetKey ? assetManager.get(assetKey) : null;
-      if (img) { pc.drawImage(img, 0, 0, 140, 140); return; }
-
-      // Procedural Fallback Portrait
-      pc.fillStyle = '#252926'; pc.fillRect(0, 0, 140, 140);
-      pc.strokeStyle = '#080908'; pc.lineWidth = 3;
-      if (speaker === 'Kiên') {
-        pc.fillStyle = '#3b453b'; pc.fillRect(24, 96, 92, 44);
-        pc.fillStyle = '#c2b9a8'; pc.beginPath(); pc.ellipse(70, 68, 28, 34, 0, 0, Math.PI * 2); pc.fill(); pc.stroke();
-        pc.fillStyle = '#0d0f0e'; pc.beginPath(); pc.arc(70, 56, 36, Math.PI * 0.9, Math.PI * 0.1); pc.lineTo(106, 108); pc.lineTo(34, 108); pc.closePath(); pc.fill();
-      } else if (speaker === 'Bé Nấm') {
-        pc.fillStyle = '#d4b43a'; pc.beginPath(); pc.arc(70, 66, 40, Math.PI, 0); pc.lineTo(116, 140); pc.lineTo(24, 140); pc.closePath(); pc.fill(); pc.stroke();
-        pc.fillStyle = '#ded4c3'; pc.beginPath(); pc.arc(70, 72, 24, 0, Math.PI * 2); pc.fill(); pc.stroke();
-      } else if (speaker === 'Bà Cầm') {
-        pc.fillStyle = '#384244'; pc.fillRect(22, 98, 96, 42);
-        pc.fillStyle = '#c7bfb0'; pc.beginPath(); pc.arc(70, 70, 28, 0, Math.PI * 2); pc.fill(); pc.stroke();
-        pc.fillStyle = '#e8eef0'; pc.beginPath(); pc.arc(58, 68, 5, 0, Math.PI * 2); pc.arc(82, 68, 5, 0, Math.PI * 2); pc.fill();
-      } else if (speaker === 'Phong') {
-        pc.fillStyle = '#2d3b3d'; pc.fillRect(22, 98, 96, 42);
-        pc.fillStyle = '#c7bfa8'; pc.beginPath(); pc.ellipse(70, 68, 26, 32, 0, 0, Math.PI * 2); pc.fill(); pc.stroke();
-        pc.fillStyle = '#111'; pc.beginPath(); pc.arc(58, 66, 4, 0, Math.PI * 2); pc.arc(82, 66, 4, 0, Math.PI * 2); pc.fill();
-      } else {
-        pc.strokeStyle = '#dfc374'; pc.lineWidth = 3;
-        pc.beginPath(); pc.ellipse(70, 70, 36, 20, 0, 0, Math.PI * 2); pc.stroke();
-        pc.fillStyle = '#c22e35'; pc.beginPath(); pc.arc(70, 70, 9, 0, Math.PI * 2); pc.fill();
-      }
-    }
-
-    /* =========================================================================
-       7. DIALOGUE SYSTEM
-       ========================================================================= */
-    const dlgBox = document.getElementById('dialogue-box');
-    const dlgSpeaker = document.getElementById('dialogue-speaker');
-    const dlgText = document.getElementById('dialogue-text');
-
-    function startDialogue(lines, onComplete = null) {
-      if (!lines || !lines.length) return;
-      if (game.lens.active) toggleLens(false);
-      game.dialogue.active = true;
-      game.dialogue.queue = lines;
-      game.dialogue.index = 0;
-      game.dialogue.charIndex = 0;
-      game.dialogue.timer = 0;
-      game.dialogue.onComplete = onComplete;
-      dlgBox.classList.add('visible');
-      document.getElementById('inventory-drawer').classList.add('collapsed');
-      renderCurrentDialogueLine();
-    }
-
-    function renderCurrentDialogueLine() {
-      const line = game.dialogue.queue[game.dialogue.index];
-      if (!line) return;
-      dlgSpeaker.textContent = line.speaker;
-      dlgSpeaker.style.color =
-        line.speaker === 'Bé Nấm' ? '#e3c44b' :
-        line.speaker === 'Bác Bếp Tùng' ? '#db9358' :
-        line.speaker === 'Bà Cầm' ? '#95c4cc' :
-        line.speaker === 'Phong' ? '#d49a6a' :
-        (line.speaker === 'Người Soát Vé' || line.speaker === 'Loa Phát Thanh') ? '#e84a52' : '#dfc374';
-      drawPortrait(line.speaker);
-      dlgText.textContent = line.text.slice(0, game.dialogue.charIndex);
-    }
-
-    function advanceDialogue() {
-      if (!game.dialogue.active) return;
-      const line = game.dialogue.queue[game.dialogue.index];
-      if (game.dialogue.charIndex < line.text.length) {
-        game.dialogue.charIndex = line.text.length;
-        dlgText.textContent = line.text;
-        return;
-      }
-      game.dialogue.index++;
-      if (game.dialogue.index >= game.dialogue.queue.length) {
-        game.dialogue.active = false;
-        dlgBox.classList.remove('visible');
-        if (game.inventoryOpen) document.getElementById('inventory-drawer').classList.remove('collapsed');
-        const cb = game.dialogue.onComplete;
-        game.dialogue.onComplete = null;
-        if (cb) cb();
-      } else {
-        game.dialogue.charIndex = 0;
-        renderCurrentDialogueLine();
-      }
-    }
-    dlgBox.addEventListener('click', advanceDialogue);
-
-    /* =========================================================================
-       8. TOASTS, INVENTORY & COMBINING
-       ========================================================================= */
-    function showToast(msg, isHorror = false) {
-      const tc = document.getElementById('toast-container');
-      const el = document.createElement('div');
-      el.className = 'toast' + (isHorror ? ' horror' : '');
-      el.textContent = msg;
-      tc.appendChild(el);
-      setTimeout(() => {
-        el.style.opacity = '0'; el.style.transition = 'opacity 0.3s';
-        setTimeout(() => el.remove(), 320);
-      }, 3300);
-    }
-
-    function addItem(id) {
-      if (!game.inventory.includes(id)) {
-        game.inventory.push(id);
-        game.selectedItem = id;
-        renderInventory();
-        updateHUD();
-        sound.playClick(720);
-      }
-    }
-
-    function removeItem(id) {
-      game.inventory = game.inventory.filter(x => x !== id);
-      if (game.selectedItem === id) game.selectedItem = null;
-      if (game.combineSource === id) game.combineSource = null;
-      renderInventory();
-      updateHUD();
-    }
-
-    function hasItem(id) { return game.inventory.includes(id); }
-
-    function toggleInventoryDrawer(force = null) {
-      if (game.dialogue.active) return;
-      game.inventoryOpen = force !== null ? force : !game.inventoryOpen;
-      document.getElementById('inventory-drawer').classList.toggle('collapsed', !game.inventoryOpen);
-      document.getElementById('controls-strip').style.opacity = game.inventoryOpen ? '0' : '1';
-      sound.playClick(460);
-    }
-
+// ... existing code ...
     function tryCombine(idA, idB) {
       const pair = [idA, idB].sort().join('+');
       if (pair === 'broken_watch+hairpin') {
         removeItem('broken_watch'); removeItem('hairpin'); addItem('working_watch');
         showToast('Ghép thành công -> Nhận [Đồng Hồ Đã Sửa]!');
-        startDialogue([{ speaker: 'Kiên', text: 'Tích... tắc... Chiếc kẹp tóc thay dây cót tạm ổn rồi. Mang sang Toa 3 đưa cho Bác Bếp Tùng thôi.' }]);
+        startDialogue([{ speaker: 'Kiên', text: 'Tích... tắc... May quá, thanh thép của kẹp tóc vừa khít thay dây cót. Đem sang Toa 3 đưa cho bác đầu bếp thôi.' }]);
         return true;
       }
       if (pair === 'broken_camera+oil_bottle') {
         removeItem('broken_camera'); removeItem('oil_bottle'); addItem('fixed_camera');
         game.flags.fixedCamera = true; game.lens.unlocked = true;
         updateHUD(); sound.playShutter();
-        showToast('ĐÃ SỬA MÁY ẢNH! Nhấn [V] hoặc Chuột phải để bật Kính Nứt 4:3!', true);
+        showToast('ĐÃ SỬA MÁY ẢNH! Nhấn [V] hoặc Chuột phải để ngắm qua ống kính!', true);
         startDialogue([
-          { speaker: 'Kiên', text: 'Cò bấm hết kẹt rồi! Khoan đã... khi nhìn qua vết nứt trên ống kính, toa tàu này trông thật rợn người...' },
-          { speaker: 'Hệ Thống', text: 'MỞ KHÓA KÍNH NỨT: Nhấn [V], Chuột phải hoặc click icon Máy Ảnh góc trên trái.' }
+          { speaker: 'Kiên', text: 'Phù... cuối cùng cái cò bấm rỉ sét này cũng chịu nhả ra rồi.' },
+          { speaker: 'Kiên', text: 'Ống kính nứt một đường chéo rõ sâu... Để bấm [V] hoặc Chuột phải giơ lên ngắm thử xem còn nhìn rõ gì không.' }
         ]);
         return true;
       }
@@ -2174,140 +575,17 @@
         game.flags.stampedTicket = true;
         updateHUD(); drawHudIcons(); sound.playTicketPunch();
         showToast('ĐÃ ĐÓNG DẤU VÉ -> Nhận [Vé Ga Đá Trắng (02:14)]!');
-        startDialogue([{ speaker: 'Kiên', text: '"GA ĐÁ TRẮNG"... Dấu mực đen kịt in hằn lên tấm vé. Quay về Toa 2 gặp Người Soát Vé thôi.' }]);
+        startDialogue([
+          { speaker: 'Kiên', text: '"GA ĐÁ TRẮNG — 02:14"... Thứ mực đen quái dị này thấm sâu vào giấy như vết máu khô vậy.' },
+          { speaker: 'Kiên', text: 'Không hiểu sao cái tên "Đá Trắng" lại khiến tim mình nhói lên... Thôi, quay về Toa 2 xem sao đã.' }
+        ]);
         return true;
       }
       sound.playClick(180);
-      showToast('Hai vật phẩm này không thể ghép với nhau.');
+      showToast('Hai thứ này chẳng ăn nhập gì với nhau cả.');
       return false;
     }
-
-    function renderInventory() {
-      const slots = document.getElementById('inv-slots');
-      slots.innerHTML = '';
-      game.inventory.forEach(id => {
-        const item = ITEM_DB[id];
-        if (!item) return;
-        const slot = document.createElement('div');
-        slot.className = 'inv-slot';
-        if (game.selectedItem === id) slot.classList.add('selected');
-        if (game.combineSource === id) slot.classList.add('combining');
-
-        const iconBox = document.createElement('div');
-        iconBox.className = 'inv-icon-box';
-        const slice = assetManager.getItemSlice(item.sheet, item.sheetIdx);
-        if (slice) {
-          const c = document.createElement('canvas');
-          c.width = slice.width; c.height = slice.height;
-          c.getContext('2d').drawImage(slice, 0, 0);
-          iconBox.appendChild(c);
-        } else {
-          iconBox.innerHTML = item.svg;
-        }
-
-        const lbl = document.createElement('div');
-        lbl.className = 'inv-name-mini';
-        lbl.textContent = item.name;
-        slot.appendChild(iconBox); slot.appendChild(lbl);
-
-        slot.onclick = () => {
-          sound.playClick(520);
-          if (game.combineSource && game.combineSource !== id) {
-            const src = game.combineSource; game.combineSource = null;
-            tryCombine(src, id); renderInventory(); return;
-          }
-          if (game.selectedItem && game.selectedItem !== id) {
-            const p = [game.selectedItem, id].sort().join('+');
-            if (p === 'broken_watch+hairpin' || p === 'broken_camera+oil_bottle' || p === 'blank_ticket+inked_stamp') {
-              tryCombine(game.selectedItem, id); renderInventory(); return;
-            }
-          }
-          game.selectedItem = id; game.combineSource = null; renderInventory();
-        };
-        slots.appendChild(slot);
-      });
-
-      const titleEl = document.getElementById('inv-sel-title');
-      const descEl = document.getElementById('inv-sel-desc');
-      const actEl = document.getElementById('inv-sel-actions');
-      actEl.innerHTML = '';
-
-      if (!game.selectedItem || !ITEM_DB[game.selectedItem]) {
-        titleEl.textContent = 'Túi Đồ';
-        descEl.textContent = 'Click 1 vật phẩm rồi click vật phẩm thứ 2 để ghép.';
-        return;
-      }
-
-      const item = ITEM_DB[game.selectedItem];
-      titleEl.textContent = item.name;
-      descEl.textContent = item.desc;
-
-      if (item.isPolaroid) {
-        const b = document.createElement('button');
-        b.className = 'btn-mini'; b.textContent = '🔍 XEM ẢNH';
-        b.onclick = () => openPolaroidModal(item);
-        actEl.appendChild(b);
-      } else if (item.id === 'fixed_camera') {
-        const b = document.createElement('button');
-        b.className = 'btn-mini'; b.textContent = game.lens.active ? 'TẮT KÍNH' : '📷 SOI KÍNH [V]';
-        b.onclick = () => toggleLens();
-        actEl.appendChild(b);
-      }
-
-      const bc = document.createElement('button');
-      bc.className = 'btn-mini' + (game.combineSource === item.id ? ' active' : '');
-      bc.textContent = game.combineSource === item.id ? 'CHỌN MÓN THỨ 2...' : '🔧 GHÉP ĐỒ';
-      bc.onclick = () => {
-        game.combineSource = game.combineSource === item.id ? null : item.id;
-        if (game.combineSource) showToast(`Đang giữ [${item.name}]. Bấm vào vật phẩm khác để ghép.`);
-        renderInventory();
-      };
-      actEl.appendChild(bc);
-    }
-
-    /* =========================================================================
-       9. DARKROOM FILM DEVELOPING MINIGAME (CHAPTER 2 - TOA 5)
-       ========================================================================= */
-    let darkroom = { active: false, holding: false, value: 0, raf: null };
-
-    function openDarkroom() {
-      if (game.flags.ch2DevelopedFilm) {
-        startDialogue([{ speaker: 'Kiên', text: 'Tôi đã tráng xong dải phim và lấy được Chìa Khóa VIP rồi.' }]);
-        return;
-      }
-      if (!hasItem('film_strip')) {
-        startDialogue([{ speaker: 'Kiên', text: 'Phòng tối tráng phim đỏ quạch... Cần tìm một dải phim âm bản để mang vào đây tráng.' }]);
-        return;
-      }
-      darkroom.active = true;
-      darkroom.holding = false;
-      darkroom.value = 0;
-      document.getElementById('darkroom-fill').style.width = '0%';
-      document.getElementById('darkroom-film-preview').textContent = 'GIỮ NÚT ĐỂ NHÚNG THUỐC HIỆN...';
-      openModal('darkroom-modal');
-      darkroomTick();
-    }
-
-    function closeDarkroom() {
-      darkroom.active = false;
-      darkroom.holding = false;
-      if (darkroom.raf) cancelAnimationFrame(darkroom.raf);
-      closeModal('darkroom-modal');
-    }
-
-    function darkroomTick() {
-      if (!darkroom.active) return;
-      if (darkroom.holding) {
-        darkroom.value = Math.min(100, darkroom.value + 0.95);
-        document.getElementById('darkroom-fill').style.width = `${darkroom.value}%`;
-        const prev = document.getElementById('darkroom-film-preview');
-        if (darkroom.value < 64) prev.textContent = 'ĐANG HIỆN ẢNH... (CHƯA ĐỦ SÁNG)';
-        else if (darkroom.value <= 84) prev.textContent = '★ RÕ NÉT! THẢ RA NGAY! ★';
-        else prev.textContent = 'CHÁY PHIM! QUÁ SÁNG!';
-      }
-      darkroom.raf = requestAnimationFrame(darkroomTick);
-    }
-
+// ... existing code ...
     function finishDarkroomHold() {
       if (!darkroom.active || !darkroom.holding) return;
       darkroom.holding = false;
@@ -2317,98 +595,20 @@
         removeItem('film_strip');
         addItem('vip_key');
         game.flags.ch2DevelopedFilm = true;
-        showToast('TRÁNG PHIM THÀNH CÔNG! Tìm thấy [Chìa Khóa VIP] giấu trong khay thuốc!', true);
+        showToast('TRÁNG PHIM THÀNH CÔNG! Tìm thấy [Chìa Khóa VIP] dưới đáy khay!', true);
         startDialogue([
-          { speaker: 'Kiên', text: 'Bức ảnh hiện lên rõ mồn một: một người đàn ông mặc vest đang khóa chặt cửa toa tàu từ bên ngoài... Đó là Phong!' },
-          { speaker: 'Kiên', text: 'Dưới đáy khay tráng phim còn giấu một chiếc [Chìa Khóa VIP] bằng đồng. Sang Toa 6 đối chất với hắn thôi!' }
+          { speaker: 'Kiên', text: 'Trời ơi... Bức ảnh vừa hiện lên kìa. Một toa tàu đang bốc cháy ngùn ngụt, còn bên ngoài có kẻ mặc vest đang chốt chặt tay nắm cửa...' },
+          { speaker: 'Kiên', text: 'Chờ đã, dưới đáy khay thuốc còn chìm một chiếc [Chìa Khóa VIP] bằng đồng. Chắc chắn mở được cửa Toa 6. Phải sang đối chất với gã Phong ngay!' }
         ]);
       } else {
         sound.playClick(160);
-        showToast(darkroom.value < 64 ? 'Phim còn mờ quá! Giữ lâu thêm chút nữa.' : 'Phim bị cháy sáng! Thử nhúng lại và thả trong vùng vàng.', true);
+        showToast(darkroom.value < 64 ? 'Phim còn mờ quá! Ngâm thêm chút nữa rồi thả trong vùng vàng.' : 'Cháy phim mất rồi! Thử nhúng lại và thả đúng vùng vàng.', true);
         darkroom.value = 0;
         document.getElementById('darkroom-fill').style.width = '0%';
         document.getElementById('darkroom-film-preview').textContent = 'THỬ LẠI...';
       }
     }
-
-    /* =========================================================================
-       10. MODALS: NOTEBOOK, POLAROID, PADLOCK
-       ========================================================================= */
-    function openModal(id) { document.getElementById(id).classList.add('visible'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('visible'); }
-
-    function openNotebook() {
-      sound.playClick(560);
-      const list = document.getElementById('notebook-list');
-      list.innerHTML = '';
-      const f = game.flags;
-      const isCh2 = game.chapter === 2;
-      document.getElementById('notebook-title').textContent = isCh2 ? '📓 SỔ TAY — CHƯƠNG 2: SÂN GA SƯƠNG MÙ' : '📓 SỔ TAY — CHƯƠNG 1: TẤM VÉ KHÔNG NGÀY';
-
-      const steps = isCh2 ? [
-        { done: f.ch2MetBaCam, text: 'Toa 4: Nói chuyện với Bà Cầm trước khoang 4B.' },
-        { done: f.ch2Saw0412, text: 'Toa 4: Bật Kính Nứt [V] soi cửa 4B để lộ nốt nhạc & mã 04-12.' },
-        { done: f.ch2FuseFixed, text: 'Toa 4: Nhận [Cầu Chì Thủy Tinh] từ Bà Cầm và lắp vào Hộp Cầu Chì mở cửa sang Toa 5.' },
-        { done: f.ch2GotFilm, text: 'Toa 5: Nhặt [Dải Phim Âm Bản] trên bàn điện báo.' },
-        { done: f.ch2DevelopedFilm, text: 'Toa 5: Vào Phòng Tối (rèm đỏ) hoàn thành minigame tráng phim để lấy [Chìa Khóa VIP].' },
-        { done: f.ch2CapturedVip, text: 'Toa 6 (VIP): Mở cửa gặp Phong, bật Kính Nứt [V] chụp dị thường ngọn lửa & vali da của Phong.' },
-        { done: f.ch2BanishedPhong, text: 'Sân Ga Số Không: Đuổi theo Phong ra ngoài sương mù, dùng Kính Nứt [V] + Chụp để đối diện ký ức 5 năm trước.' }
-      ] : [
-        { done: f.metBeNam, text: 'Toa 2: Nói chuyện với Bé Nấm.' },
-        { done: f.metChef, text: 'Toa 3: Nói chuyện với Bác Bếp Tùng.' },
-        { done: f.gaveWatch, text: 'Toa 1: Tìm [Kẹp Tóc] & [Đồng Hồ Hỏng], ghép lại đưa Bác Tùng đổi [Lọ Dầu Máy].' },
-        { done: f.fixedCamera, text: 'Ghép [Lọ Dầu Máy] + [Máy Ảnh (Hỏng cò)] mở khóa Kính Nứt [V].' },
-        { done: f.sawClockHint, text: 'Toa 2: Bật Kính Nứt [V] soi Đồng hồ 02:14.' },
-        { done: f.capturedHands, text: 'Toa 1: Bật Kính Nứt [V] chụp dị thường đống thùng gỗ lấy mã 2-1-4.' },
-        { done: f.openedChest, text: 'Toa 1: Nhập mã 214 mở Rương Quạ Sắt lấy [Con Dấu Khô Mực].' },
-        { done: f.inkedStamp, text: 'Toa 3: Soi Kính Nứt [V] vào Nồi Súp rồi chấm [Con Dấu Khô Mực].' },
-        { done: f.stampedTicket, text: 'Ghép [Con Dấu Có Mực] + [Tấm Vé Trống] -> [Vé Ga Đá Trắng].' },
-        { done: f.ch1Complete, text: 'Toa 2: Trình vé cho Người Soát Vé để sang Chương 2.' }
-      ];
-
-      let firstUndone = false;
-      steps.forEach(s => {
-        const li = document.createElement('li');
-        li.className = 'clue-item' + (s.done ? ' done' : (!firstUndone ? ' current' : ''));
-        if (!s.done && !firstUndone) firstUndone = true;
-        li.textContent = (s.done ? '✓ ' : '▸ ') + s.text;
-        list.appendChild(li);
-      });
-      openModal('notebook-modal');
-    }
-
-    function openPolaroidModal(item) {
-      sound.playClick(600);
-      const pc = document.getElementById('polaroid-view-canvas').getContext('2d');
-      pc.fillStyle = '#151e19'; pc.fillRect(0, 0, 360, 240);
-
-      const negKey = item.polaroidType === 'ch2_vip' ? 'bg_car_vip_neg' : 'bg_car_luggage_neg';
-      const img = assetManager.get(negKey);
-      if (img) {
-        pc.drawImage(img, img.width * 0.14, img.height * 0.25, img.width * 0.7, img.height * 0.7, 0, 0, 360, 240);
-      } else {
-        pc.fillStyle = '#d6363d'; pc.font = 'bold 34px "Special Elite", monospace'; pc.textAlign = 'center';
-        pc.fillText(item.polaroidType === 'ch2_vip' ? 'TOA TÀU CHÁY' : '2 - 1 - 4', 180, 130);
-      }
-
-      pc.strokeStyle = 'rgba(255,255,255,0.4)'; pc.lineWidth = 1.5;
-      pc.beginPath(); pc.moveTo(270, 0); pc.lineTo(170, 125); pc.lineTo(80, 240); pc.stroke();
-      document.getElementById('polaroid-view-caption').textContent = item.caption;
-      openModal('polaroid-modal');
-    }
-
-    function openPadlockModal() {
-      sound.playClick(420);
-      for (let i = 0; i < 3; i++) document.getElementById('digit-' + i).textContent = game.padlockDigits[i];
-      openModal('padlock-modal');
-    }
-
-    function changeDigit(idx, delta) {
-      sound.playClick(480 + idx * 60);
-      game.padlockDigits[idx] = (game.padlockDigits[idx] + delta + 10) % 10;
-      document.getElementById('digit-' + idx).textContent = game.padlockDigits[idx];
-    }
-
+// ... existing code ...
     function checkPadlock() {
       if (game.padlockDigits.join('') === '214') {
         closeModal('padlock-modal');
@@ -2416,17 +616,20 @@
         addItem('dry_stamp');
         sound.playTicketPunch();
         showToast('CẠCH! Rương Quạ Sắt đã mở -> Nhận [Con Dấu Khô Mực]!');
-        startDialogue([{ speaker: 'Kiên', text: 'Con dấu "GA ĐÁ TRẮNG" khô cong rồi. Quay sang Toa 3 Nhà Ăn tìm mực đen thôi.' }]);
+        startDialogue([
+          { speaker: 'Kiên', text: 'Mở được rồi! Bên trong chỉ có đúng một con dấu gỗ cũ khắc chữ "GA ĐÁ TRẮNG"...' },
+          { speaker: 'Kiên', text: 'Mặt cao su khô cong rồi, đóng lên vé chẳng ra nét nào đâu. Mình phải sang Toa 3 tìm thứ gì đó đặc như mực để chấm mới được.' }
+        ]);
       } else {
         sound.playClick(160);
         const card = document.getElementById('padlock-card');
         card.classList.remove('shake-err'); void card.offsetWidth; card.classList.add('shake-err');
-        showToast('Sai mật mã! Dùng Kính Nứt [V] soi đống thùng gỗ ở Toa 1 để tìm 3 chữ số.', true);
+        showToast('Ổ khóa không nhúc nhích. Thử dùng Kính Nứt [V] soi đống thùng gỗ ở Toa 1 tìm 3 chữ số.', true);
       }
     }
 
     /* =========================================================================
-       11. SCENE TRANSITIONS & CHAPTER 1 + CHAPTER 2 INTERACTIONS
+       11. SCENE TRANSITIONS & CHAPTER 1 + CHAPTER 2 INTERACTIONS (NATURAL DIALOGUE)
        ========================================================================= */
     function enterChapter2Sequence() {
       game.chapter = 2;
@@ -2443,8 +646,8 @@
         game.shakeTimer = 1.1;
         startDialogue([
           { speaker: 'Loa Phát Thanh', text: '*RÈ... RÈ...* ĐOÀN TÀU ĐÃ DỪNG TẠI SÂN GA SỐ KHÔNG. HÀNH KHÁCH "TRẦN QUỐC PHONG" VUI LÒNG XUỐNG GA...' },
-          { speaker: 'Kiên', text: 'Tàu dừng hẳn rồi... Ngoài cửa sổ chỉ có màn sương mù trắng xóa. Mình đang ở Toa 4: Toa Giường Nằm.' },
-          { speaker: 'Kiên', text: 'Phía trước khoang 4B có một người phụ nữ cầm đàn violin.' }
+          { speaker: 'Kiên', text: 'Tiếng phanh rít lạnh cả người... Tàu dừng hẳn rồi. Ngoài kia đặc quánh sương mù, chẳng thấy bóng dáng sân ga bình thường nào cả.' },
+          { speaker: 'Kiên', text: 'Đây là Toa 4 — Toa Giường Nằm. Trước cửa khoang 4B có một bà cụ đang ôm cây đàn violin...' }
         ]);
       }, 2400);
     }
@@ -2468,8 +671,8 @@
           setTimeout(() => {
             sound.playTicketPunch();
             startDialogue([
-              { speaker: 'Hệ Thống', text: 'Đèn toa chớp tắt dữ dội. Người Soát Vé bước vào với chiếc kìm bấm vé kêu TÁCH... TÁCH...' },
-              { speaker: 'Kiên', text: 'Tiến lại gần và trình tấm vé Ga Đá Trắng thôi.' }
+              { speaker: 'Hệ Thống', text: 'Đèn toa chớp tắt liên hồi. Một bóng người cao lênh khênh trong bộ đồng phục rách nát bước ra từ đầu toa, chiếc kìm bấm vé kêu TÁCH... TÁCH...' },
+              { speaker: 'Kiên', text: 'Lạnh sống lưng thật... Người Soát Vé đến rồi. Mình phải bước tới đưa tấm vé Ga Đá Trắng cho hắn.' }
             ]);
           }, 700);
         }
@@ -2478,8 +681,9 @@
           game.flickerTimer = 1.8;
           sound.playHorrorSwell();
           startDialogue([
-            { speaker: 'Phong', text: 'Cứu tôi!! Đừng lại gần!! Tôi không cố ý khóa cửa toa đó đâu!!' },
-            { speaker: 'Kiên', text: 'Có một bóng đen khổng lồ đang trườn ra từ màn sương phía sau Phong! Mình phải giơ Máy Ảnh Kính Nứt [V] lên CHỤP ngay!' }
+            { speaker: 'Phong', text: 'Cứu tôi!! Đừng lại gần!! Tôi không cố ý khóa cửa toa đó đâu... tôi chỉ muốn sống thôi mà!!' },
+            { speaker: 'Kiên', text: 'Phong!! Đứng yên đó! Có thứ bóng đen khổng lồ đang trườn ra từ màn sương ngay sau lưng anh kìa!' },
+            { speaker: 'Kiên', text: 'Mình phải giơ Máy Ảnh Kính Nứt [V] lên CHỤP thẳng vào nó ngay!' }
           ]);
         }
       };
@@ -2500,104 +704,143 @@
 
       // --- CHAPTER 1 HOTSPOTS ---
       if (h.id === 'seat_14') {
-        startDialogue([{ speaker: 'Kiên', text: 'Ghế gỗ số 14. Tôi tỉnh dậy ở đây giữa màn đêm sương mù.' }]);
+        startDialogue([{ speaker: 'Kiên', text: 'Ghế gỗ số 14... Mình tỉnh dậy ngay ở đây, đầu đau như búa bổ mà chẳng nhớ nổi một mảnh nào về chuyện đã lên chuyến tàu này lúc nào.' }]);
       } else if (h.id === 'clock_0214') {
-        startDialogue([{ speaker: 'Kiên', text: f.sawClockHint ? 'Qua Kính Nứt, quanh đồng hồ 02:14 hiện dòng chữ: "HẮN GIẤU CON DẤU..." — ở Toa 1.' : 'Đồng hồ chết cứng ở 02:14. Thử bật Kính Nứt [V] soi vào xem.' }]);
+        startDialogue([{
+          speaker: 'Kiên',
+          text: f.sawClockHint
+            ? 'Kim đồng hồ vẫn chết cứng ở 02:14. Dòng chữ cào sau lớp kính nứt bảo con dấu nằm trong "Bụng Quạ Sắt" ở Toa 1...'
+            : 'Cái đồng hồ chết cứng ở đúng 02:14 sáng. Lạ thật, tàu vẫn chạy ầm ầm mà thời gian lại đứng yên.'
+        }]);
       } else if (h.id === 'npc_benam') {
         if (!f.metBeNam) {
           f.metBeNam = true;
           startDialogue([
-            { speaker: 'Kiên', text: 'Cháu có nghe thấy tiếng gì không, Nấm?' },
-            { speaker: 'Bé Nấm', text: 'Tiếng kìm bấm vé đấy chú... Bác Bếp Tùng ở Toa 3 có dầu máy sửa máy ảnh, nhưng bác ấy cần một chiếc đồng hồ chạy được.' }
+            { speaker: 'Kiên', text: 'Này cháu bé... Cháu có nghe thấy tiếng gì lạ không?' },
+            { speaker: 'Bé Nấm', text: 'Chú tỉnh rồi à? Chú ngủ lâu lắm rồi đấy... Đừng nhìn ra ngoài cửa sổ nhé, sương mù ngoài kia hay nhìn lại lắm.' },
+            { speaker: 'Kiên', text: 'Cháu biết chuyến tàu này đang chạy về ga nào không? Vé của chú chẳng ghi tên ga nào cả.' },
+            { speaker: 'Bé Nấm', text: 'Không có tên ga thì chú Soát Vé không cho chú ngồi đâu. Cái máy ảnh của chú kẹt cò rồi kìa... Bác đầu bếp ở Toa 3 có lọ dầu máy đấy, nhưng bác ấy đang cáu vì hỏng đồng hồ.' }
           ]);
+        } else if (!f.fixedCamera) {
+          startDialogue([{ speaker: 'Bé Nấm', text: 'Chú sang Toa 1 bên trái tìm đồ sửa đồng hồ cho bác Tùng đi. Bác ấy cho dầu máy là máy ảnh của chú nhìn thấy được nhiều thứ hay lắm...' }]);
         } else {
-          startDialogue([{ speaker: 'Bé Nấm', text: f.fixedCamera ? 'Máy ảnh sửa xong rồi! Chú nhấn [V] soi đồng hồ 02:14 và đống thùng ở Toa 1 đi.' : 'Chú sang Toa 1 tìm đồ sửa đồng hồ rồi đưa Bác Tùng ở Toa 3 nhé.' }]);
+          startDialogue([{ speaker: 'Bé Nấm', text: 'Chú sửa xong máy ảnh rồi à? Đừng sợ những thứ chú thấy trong gương kính nứt nhé... chúng chỉ muốn chú nhớ lại thôi.' }]);
         }
       } else if (h.id === 'npc_soatve') {
         if (hasItem('stamped_ticket')) {
           sound.playTicketPunch();
           startDialogue([
-            { speaker: 'Người Soát Vé', text: '...Xuất trình... vé...' },
-            { speaker: 'Kiên', text: 'Đây. Vé Ga Đá Trắng, chuyến 02:14.' },
-            { speaker: 'Người Soát Vé', text: 'TÁCH! Hợp lệ... Cửa sang Toa 4 đã mở. Chuyến tàu đang tiến vào Sân Ga Sương Mù...' }
+            { speaker: 'Người Soát Vé', text: 'Vé...' },
+            { speaker: 'Kiên', text: 'Đây... Vé của tôi.' },
+            { speaker: 'Người Soát Vé', text: 'Ga Đá Trắng... 02:14. TÁCH! Cuối cùng cậu cũng nhớ ra nơi mình phải xuống rồi.' },
+            { speaker: 'Người Soát Vé', text: 'Cửa sang Toa 4 đã mở. Đừng để các hành khách phía trước phải chờ quá lâu...' }
           ], () => enterChapter2Sequence());
         }
       } else if (h.id === 'tool_cabinet') {
         if (!f.pickedHairpin) {
           f.pickedHairpin = true; addItem('hairpin'); showToast('Đã nhặt [Kẹp Tóc]!');
-          startDialogue([{ speaker: 'Kiên', text: 'Một chiếc kẹp tóc thép đàn hồi. Có thể thay dây cót đồng hồ.' }]);
-        } else startDialogue([{ speaker: 'Kiên', text: 'Chỉ còn vài cái cờ lê gỉ sét.' }]);
+          startDialogue([{ speaker: 'Kiên', text: 'Một chiếc kẹp tóc thép nằm kẹt trong ngăn kéo rỉ. Độ đàn hồi vẫn còn tốt, biết đâu chế lại làm lò xo hay dây cót được.' }]);
+        } else {
+          startDialogue([{ speaker: 'Kiên', text: 'Trong tủ chỉ còn mấy cái cờ lê rỉ sét với ốc vít gãy.' }]);
+        }
       } else if (h.id === 'crates_pile') {
         if (!f.pickedBrokenWatch) {
           f.pickedBrokenWatch = true; addItem('broken_watch'); showToast('Đã nhặt [Đồng Hồ Hỏng]!');
-          startDialogue([{ speaker: 'Kiên', text: 'Đồng hồ quả quýt hỏng lò xo. Ghép với Kẹp Tóc trong túi đồ [I] để sửa!' }]);
-        } else startDialogue([{ speaker: 'Kiên', text: f.capturedHands ? 'Ảnh Polaroid ghi rõ mã 2-1-4 cho Rương Quạ Sắt.' : 'Bật Kính Nứt [V] soi và CHỤP đống thùng gỗ này xem!' }]);
+          startDialogue([{ speaker: 'Kiên', text: 'Ai đánh rơi chiếc đồng hồ quả quýt ở đây... Mở nắp ra thì thấy gãy mất thanh lò xo bên trong. Thử mở túi đồ [I] ghép với Kẹp Tóc xem.' }]);
+        } else if (f.capturedHands) {
+          startDialogue([{ speaker: 'Kiên', text: 'Tấm ảnh Polaroid in rõ dãy số 2 - 1 - 4. Đúng là mật mã của Rương Quạ Sắt rồi.' }]);
+        } else {
+          startDialogue([{ speaker: 'Kiên', text: f.fixedCamera ? 'Mình thấy lạnh gáy mỗi lần đứng gần đống thùng này... Thử bật Kính Nứt [V] soi và chụp xem.' : 'Toàn thùng gỗ ẩm mốc với vali không chủ.' }]);
+        }
       } else if (h.id === 'crow_chest') {
-        if (f.openedChest) startDialogue([{ speaker: 'Kiên', text: 'Rương Quạ Sắt đã trống rỗng.' }]);
+        if (f.openedChest) startDialogue([{ speaker: 'Kiên', text: 'Rương Quạ Sắt trống trơn rồi.' }]);
         else openPadlockModal();
       } else if (h.id === 'dining_tables') {
-        startDialogue([{ speaker: 'Kiên', text: 'Bàn ăn ố bẩn, nến tắt ngúm.' }]);
+        startDialogue([{ speaker: 'Kiên', text: 'Khăn trải bàn ố vàng, nến chảy sáp tắt ngúm từ bao giờ. Chẳng có vị khách nào ngồi đây cả.' }]);
       } else if (h.id === 'npc_bactung') {
         f.metChef = true;
         if (hasItem('working_watch')) {
           removeItem('working_watch'); f.gaveWatch = true; addItem('oil_bottle');
           showToast('Nhận [Lọ Dầu Máy] từ Bác Bếp Tùng!');
-          startDialogue([{ speaker: 'Bác Bếp Tùng', text: 'Tích tắc rõ đều! Cầm lọ dầu máy này tra vào máy ảnh đi cậu.' }]);
-        } else startDialogue([{ speaker: 'Bác Bếp Tùng', text: f.gaveWatch ? 'Đừng chĩa ống kính nứt vào nồi súp của tôi...' : 'Kiếm cho tôi chiếc đồng hồ chạy được, tôi đổi cho lọ dầu máy.' }]);
+          startDialogue([
+            { speaker: 'Kiên', text: 'Bác Tùng, cháu vừa sửa tạm được chiếc đồng hồ quả quýt này. Vẫn chạy tích tắc đều lắm.' },
+            { speaker: 'Bác Bếp Tùng', text: 'Ồ, khá đấy chú em! May quá, không có đồng hồ tôi chẳng biết nồi súp này hầm bao lâu rồi... Cầm lọ dầu máy này đi, nhỏ vào cò máy ảnh là trơn tru ngay.' },
+            { speaker: 'Bác Bếp Tùng', text: 'À mà này... sửa xong thì đừng có chĩa ống kính lung tung vào quầy bếp của tôi đấy.' }
+          ]);
+        } else if (f.gaveWatch) {
+          startDialogue([{ speaker: 'Bác Bếp Tùng', text: 'Làm gì thì làm nhanh lên chú em, tàu đêm nay chạy kỳ quặc lắm... mùi khói khét cứ lởn vởn quanh đây.' }]);
+        } else {
+          startDialogue([
+            { speaker: 'Bác Bếp Tùng', text: 'Chú em muốn ăn gì? Súp hành tây nóng hổi đây, mà khoan... cái đồng hồ bếp chết tiệt lại đứng im rồi, canh giờ kiểu gì không biết!' },
+            { speaker: 'Kiên', text: 'Bác ơi, cháu nghe bé Nấm bảo bác có dầu máy bôi trơn...' },
+            { speaker: 'Bác Bếp Tùng', text: 'Dầu máy thì có đấy, nhưng chú kiếm cho tôi cái đồng hồ nào còn chạy được đi rồi tôi đổi cho. Chắc dưới Toa Hành Lý có đồ thất lạc.' }
+          ]);
+        }
       } else if (h.id === 'soup_pot') {
         if (hasItem('dry_stamp') && f.inspectedSoupNegative) {
           removeItem('dry_stamp'); addItem('inked_stamp'); f.inkedStamp = true;
-          showToast('Đã chấm mực đen -> Nhận [Con Dấu Có Mực]!', true);
-          startDialogue([{ speaker: 'Kiên', text: 'Giờ mở túi đồ [I] ghép [Con Dấu Có Mực] với [Tấm Vé Trống] thôi.' }]);
-        } else startDialogue([{ speaker: 'Kiên', text: f.fixedCamera ? 'Thử bật Kính Nứt [V] soi kỹ vào nồi súp xem sao.' : 'Nồi súp hành tây bốc mùi ngai ngái.' }]);
+          showToast('Đã lén chấm mực đen -> Nhận [Con Dấu Có Mực]!', true);
+          startDialogue([
+            { speaker: 'Kiên', text: 'Bác Tùng đang quay lưng... Nhanh tay nhúng Con Dấu vào thứ chất lỏng đen kịt này thôi.' },
+            { speaker: 'Kiên', text: 'Lạnh buốt cả tay... Giờ mở túi đồ [I] ghép [Con Dấu Có Mực] với [Tấm Vé Trống] là xong.' }
+          ]);
+        } else {
+          startDialogue([{ speaker: 'Kiên', text: f.fixedCamera ? 'Bề ngoài trông như nồi súp hành tây, nhưng mùi cứ tanh nồng... Thử bật Kính Nứt [V] soi vào nồi xem sao.' : 'Nồi súp sôi lăn tăn, bốc mùi ngai ngái khó tả.' }]);
+        }
       } else if (h.id === 'door_car4') {
         if (f.ch1Complete) transitionToScene('car_sleeper', 150);
-        else { sound.playTicketPunch(); startDialogue([{ speaker: 'Hệ Thống', text: 'Cửa sang Toa 4 bị khóa. Hãy trình vé cho Người Soát Vé ở Toa 2 trước.' }]); }
+        else {
+          sound.playTicketPunch();
+          startDialogue([{ speaker: 'Hệ Thống', text: 'Cửa nối sang Toa 4 khóa chặt. Phía bên kia vang lên tiếng kìm bấm vé lạnh lẽo...' }]);
+        }
       }
 
       // --- CHAPTER 2 HOTSPOTS ---
       else if (h.id === 'door_4b') {
-        startDialogue([{ speaker: 'Kiên', text: f.ch2Saw0412 ? 'Qua lớp âm bản, cửa 4B hiện lên nốt nhạc ma quái và mã 04-12.' : 'Cửa khoang 4B hé mở tối om. Thử bật Kính Nứt [V] soi vào xem.' }]);
+        startDialogue([{ speaker: 'Kiên', text: f.ch2Saw0412 ? 'Qua kính nứt, những cánh tay đen thò ra từ khoang 4B cùng dãy số 04-12 phát sáng... Lạnh sống lưng thật.' : 'Cửa khoang 4B hé mở tối om. Thử bật Kính Nứt [V] soi vào xem có gì bên trong.' }]);
       } else if (h.id === 'npc_bacam') {
         f.ch2MetBaCam = true;
         if (!f.ch2Saw0412) {
           startDialogue([
-            { speaker: 'Bà Cầm', text: 'Cậu có nghe thấy tiếng nhịp tim đập dưới đường ray không? Đoàn tàu dừng lại vì có kẻ trốn trong Khoang VIP...' },
-            { speaker: 'Bà Cầm', text: 'Cửa sang Toa 5 mất điện rồi. Cậu hãy dùng chiếc máy ảnh kia soi vào cửa 4B đi, rồi quay lại gặp tôi.' }
+            { speaker: 'Bà Cầm', text: 'Tiếng ray sắt đêm nay nghe giống tiếng tim đập quá, cậu nhỉ... Tàu dừng lại rồi, nghĩa là đến lượt một người nữa phải xuống ga.' },
+            { speaker: 'Kiên', text: 'Bà có biết "Trần Quốc Phong" mà loa vừa gọi là ai không? Cửa sang Toa 5 bị mất điện khóa mất rồi.' },
+            { speaker: 'Bà Cầm', text: 'Mắt tôi không nhìn thấy, nhưng tôi nghe thấy có thứ gì đó đang gõ nhịp trên cửa khoang 4B. Cậu dùng chiếc máy ảnh của cậu soi vào đó đi, rồi quay lại nói tôi biết cậu thấy gì.' }
           ]);
         } else if (!f.ch2GotFuse) {
           f.ch2GotFuse = true;
           addItem('fuse');
           showToast('Bà Cầm trao cho bạn [Cầu Chì Thủy Tinh]!');
           startDialogue([
-            { speaker: 'Kiên', text: 'Bà Cầm, cháu thấy những nốt nhạc và số 04-12 trên cửa 4B!' },
-            { speaker: 'Bà Cầm', text: 'Đúng rồi... Đó là ngày định mệnh. Cầm lấy [Cầu Chì Thủy Tinh] này lắp vào Hộp Cầu Chì bên trái để mở cửa sang Toa 5.' }
+            { speaker: 'Kiên', text: 'Bà Cầm, qua ống kính cháu thấy những nốt nhạc lơ lửng và dãy số 04-12 khắc trên cửa 4B... còn có cả bàn tay đen thò ra nữa.' },
+            { speaker: 'Bà Cầm', text: '04-12... Đúng là nhịp điệu của đêm năm năm trước rồi. Cầm lấy [Cầu Chì Thủy Tinh] này lắp vào Hộp Cầu Chì bên trái đi, điện cửa Toa 5 sẽ có lại.' }
           ]);
         } else {
-          startDialogue([{ speaker: 'Bà Cầm', text: 'Hãy tiến về phía Toa Bưu Chính và Khoang VIP... sự thật về gã Phong nằm ở đó.' }]);
+          startDialogue([{ speaker: 'Bà Cầm', text: 'Gã Phong đang trốn sau cánh cửa Khoang VIP ở Toa 6. Cậu cẩn thận đấy... có những tội lỗi càng soi đèn vào lại càng cháy dữ dội hơn.' }]);
         }
       } else if (h.id === 'fuse_box') {
         if (f.ch2FuseFixed) {
-          startDialogue([{ speaker: 'Kiên', text: 'Hộp cầu chì đã có điện trở lại. Cửa sang Toa 5 đã mở.' }]);
+          startDialogue([{ speaker: 'Kiên', text: 'Hộp cầu chì đã có điện lại. Cửa nối sang Toa 5 mở rồi.' }]);
         } else if (hasItem('fuse')) {
           removeItem('fuse'); f.ch2FuseFixed = true;
           sound.playClick(760);
           showToast('TÁCH! Đã lắp cầu chì -> Cửa sang Toa 5 đã có điện!');
-          startDialogue([{ speaker: 'Kiên', text: 'Điện hành lang sáng lên rồi! Giờ mình có thể sang Toa 5 (Toa Bưu Chính).' }]);
+          startDialogue([{ speaker: 'Kiên', text: 'Điện hành lang bật lên rồi. Giờ sang Toa 5 — Toa Bưu Chính xem có manh mối gì về Phong không.' }]);
         } else {
-          startDialogue([{ speaker: 'Kiên', text: 'Hộp cầu chì cháy đen, thiếu một ống cầu chì thủy tinh. Hỏi Bà Cầm xem sao.' }]);
+          startDialogue([{ speaker: 'Kiên', text: 'Hộp cầu chì cháy đen, thiếu đúng một ống cầu chì thủy tinh. Hỏi Bà Cầm xem bà có giữ cái dự phòng nào không.' }]);
         }
       } else if (h.id === 'exit_to_car5') {
         if (f.ch2FuseFixed) transitionToScene('car_mail', 140);
-        else { sound.playClick(160); showToast('Cửa điện sang Toa 5 đang mất nguồn! Hãy sửa Hộp Cầu Chì.'); }
+        else { sound.playClick(160); showToast('Cửa điện sang Toa 5 đang mất nguồn! Hãy sửa Hộp Cầu Chì trước.'); }
       } else if (h.id === 'morse_desk') {
         if (!f.ch2GotFilm) {
           f.ch2GotFilm = true; addItem('film_strip');
           showToast('Đã nhặt [Dải Phim Âm Bản] trên bàn điện báo!');
-          startDialogue([{ speaker: 'Kiên', text: 'Một dải phim âm bản chưa tráng nằm cạnh máy điện báo. Có thể mang vào Phòng Tối (rèm đỏ cuối toa) để tráng.' }]);
-        } else startDialogue([{ speaker: 'Kiên', text: 'Chiếc máy điện báo cũ vẫn thỉnh thoảng gõ nhịp tích-tè khe khẽ.' }]);
+          startDialogue([{ speaker: 'Kiên', text: 'Một dải phim âm bản chưa tráng nằm cạnh máy điện báo. Cuối toa có tấm rèm đỏ của Phòng Tối, mang vào tráng thử xem chụp thứ gì.' }]);
+        } else {
+          startDialogue([{ speaker: 'Kiên', text: 'Chiếc máy điện báo cũ thỉnh thoảng tự gõ mấy nhịp tích-tè rời rạc nghe sởn cả gai ốc.' }]);
+        }
       } else if (h.id === 'evidence_board') {
-        startDialogue([{ speaker: 'Kiên', text: 'Bảng chứng cứ ghim đầy ảnh Polaroid cũ nối bằng chỉ đỏ. Thử bật Kính Nứt [V] soi lên bảng xem.' }]);
+        startDialogue([{ speaker: 'Kiên', text: 'Bảng chứng cứ chằng chịt chỉ đỏ nối những tấm ảnh Polaroid mờ nhòe... Sao mình có cảm giác nét chữ trên bảng này quen đến đáng sợ.' }]);
       } else if (h.id === 'darkroom_curtain') {
         openDarkroom();
       } else if (h.id === 'exit_to_car6') {
@@ -2610,44 +853,129 @@
           transitionToScene('car_vip', 140);
         } else {
           sound.playClick(160);
-          showToast('Cửa Khoang VIP bị khóa trái! Hãy tráng dải phim trong Phòng Tối ở Toa 5.');
+          showToast('Cửa Khoang VIP khóa trái từ bên trong! Hãy tráng dải phim trong Phòng Tối ở Toa 5.');
         }
       } else if (h.id === 'vip_briefcase') {
-        startDialogue([{ speaker: 'Kiên', text: f.ch2CapturedVip ? 'Chiếc vali da đã bật khóa, bên trong chỉ còn tro tàn và mùi khói khét.' : 'Chiếc vali da Phong luôn ôm khư khư... Có làn khói đen rỉ ra khi soi bằng Kính Nứt [V].' }]);
+        startDialogue([{ speaker: 'Kiên', text: f.ch2CapturedVip ? 'Chiếc vali da bật tung khóa, bên trong chỉ còn tro tàn và mùi khói khét lẹt.' : 'Chiếc vali da mà Phong cứ ôm khư khư... Thử bật Kính Nứt [V] soi vào nó xem hắn giấu thứ gì.' }]);
       } else if (h.id === 'npc_phong_vip') {
         f.ch2MetPhong = true;
         startDialogue([
-          { speaker: 'Phong', text: 'Cậu là ai?! Đóng cửa lại ngay! Đừng để thứ ngoài sân ga bò vào đây!' },
-          { speaker: 'Kiên', text: 'Loa phát thanh vừa gọi tên anh, Trần Quốc Phong. Anh đang giấu thứ gì trong chiếc vali kia?' },
-          { speaker: 'Phong', text: 'Câm miệng! Chỉ là đồ cổ thôi! Cất cái máy ảnh chết tiệt đó đi!' }
+          { speaker: 'Phong', text: 'Đứng yên đấy! Cậu là ai? Không phải người của bọn họ chứ?! Đóng cửa lại mau!' },
+          { speaker: 'Kiên', text: 'Bình tĩnh đi! Loa phát thanh vừa gọi tên anh — Trần Quốc Phong. Anh đang giấu thứ gì trong chiếc vali kia?' },
+          { speaker: 'Phong', text: 'Câm miệng! Chỉ là đồ cổ tôi mang theo thôi! Đừng có chĩa cái máy ảnh chết tiệt đó vào tôi!' }
         ]);
       } else if (h.id === 'station_sign') {
-        startDialogue([{ speaker: 'Kiên', text: '"SÂN GA SỐ KHÔNG — GA ĐÁ TRẮNG". Mọi thứ đều quay về nơi này.' }]);
+        startDialogue([{ speaker: 'Kiên', text: '"SÂN GA SỐ KHÔNG — GA ĐÁ TRẮNG". Tấm biển rỉ sét y hệt cái tên mình vừa đóng lên vé...' }]);
       } else if (h.id === 'npc_phong_platform') {
         if (f.ch2BanishedPhong) {
           startDialogue([{ speaker: 'Kiên', text: 'Chỉ còn lại một hình nộm bằng sáp lạnh ngắt ngồi trên ghế gỗ...' }]);
         } else {
           startDialogue([
-            { speaker: 'Phong', text: 'Nó đang kéo tôi xuống!! Cứu tôi với!!' },
-            { speaker: 'Kiên', text: 'Phải bật Kính Nứt [V] và CHỤP thẳng vào bóng đen sau lưng Phong!' }
+            { speaker: 'Phong', text: 'Nó đang kéo chân tôi xuống!! Cứu tôi với!!' },
+            { speaker: 'Kiên', text: 'Phải bật Kính Nứt [V] và CHỤP thẳng vào bóng đen sau lưng Phong ngay!' }
           ]);
         }
       }
     }
 
     /* =========================================================================
-       12. NEGATIVE LENS 4:3 (`ctx.clip()`) & CAMERA SHUTTER
+       12. NEGATIVE LENS 4:3 (`ctx.clip()`), FIRST-SIGHT HORROR REACTIONS & SHUTTER
        ========================================================================= */
+    function triggerFirstSightReaction(anom) {
+      const f = game.flags;
+      if (anom.id === 'anom_clock' && !f.reacted_clock_ghost) {
+        f.reacted_clock_ghost = true;
+        f.sawClockHint = true;
+        game.shakeTimer = 0.85;
+        sound.playHorrorSting();
+        sound.playHeartbeat();
+        toggleLens(false);
+        startDialogue([
+          { speaker: 'Kiên', text: 'Á—!! Cái quái gì thế kia?! Mấy cái bóng đen mắt trắng đang bám đầy quanh đồng hồ... Chúng đang nhìn chằm chằm vào mình!' },
+          { speaker: 'Kiên', text: 'Bình tĩnh nào Kiên... Lúc bỏ máy ảnh xuống thì chẳng có gì cả. Chỉ có qua cái kính nứt này mới thấy...' },
+          { speaker: 'Kiên', text: 'Khoan đã, trên tường ngay dưới kim 02:14 có dòng chữ cào xước: "HẮN GIẤU CON DẤU... BỤNG QUẠ SẮT - TOA 1". Bụng quạ sắt? Ý là cái rương sắt ở Toa Hành Lý sao?' }
+        ]);
+      } else if (anom.id === 'anom_hands' && !f.reacted_hands_ghost) {
+        f.reacted_hands_ghost = true;
+        game.shakeTimer = 0.9;
+        sound.playHorrorSting();
+        sound.playHeartbeat();
+        toggleLens(false);
+        startDialogue([
+          { speaker: 'Kiên', text: 'Trời đất ơi...!! Cả chục cánh tay xám ngoét đang thò ra từ khe thùng gỗ! Chúng đang vươn về phía cái rương hình con quạ...' },
+          { speaker: 'Kiên', text: 'Dưới sàn chỗ mấy ngón tay chỉ có mấy con số mờ mờ... Mình phải căn chuẩn rồi bấm [SPACE] hoặc Chuột trái chụp một tấm mới soi rõ được!' }
+        ]);
+      } else if (anom.id === 'anom_soup' && !f.reacted_soup_ghost) {
+        f.reacted_soup_ghost = true;
+        f.inspectedSoupNegative = true;
+        game.shakeTimer = 0.55;
+        sound.playBubbling();
+        sound.playHorrorSwell();
+        toggleLens(false);
+        startDialogue([
+          { speaker: 'Kiên', text: 'Cái... cái thứ gì đang trào ra khỏi nồi súp vậy?! Không phải súp hành tây... Qua ống kính nó đen đặc như mực tàu, còn có cả bóng đen bò lổm ngổm lên tường!' },
+          { speaker: 'Kiên', text: 'Bác Tùng đứng ngay bên cạnh mà chẳng thấy gì sao? ...Khoan đã, nếu thứ này đặc như mực đen... mình có thể lén nhúng Con Dấu khô mực vào thử.' }
+        ]);
+      } else if (anom.id === 'anom_sleeper' && !f.reacted_sleeper_ghost) {
+        f.reacted_sleeper_ghost = true;
+        f.ch2Saw0412 = true;
+        game.shakeTimer = 0.8;
+        sound.playHorrorSting();
+        toggleLens(false);
+        startDialogue([
+          { speaker: 'Kiên', text: 'Gì thế kia?! Mấy cánh tay tái nhợt thò ra từ ống gió trần và khe cửa 4B...' },
+          { speaker: 'Kiên', text: 'Ngay trên cánh cửa 4B còn phát sáng dãy số "04-12" lẫn mấy nốt nhạc kỳ dị. Mau quay lại báo cho Bà Cầm biết thôi!' }
+        ]);
+      } else if (anom.id === 'anom_mail_curtain' && !f.reacted_mail_ghost) {
+        f.reacted_mail_ghost = true;
+        game.shakeTimer = 0.7;
+        sound.playHorrorSting();
+        toggleLens(false);
+        startDialogue([
+          { speaker: 'Kiên', text: 'Khốn khiếp...!! Sau tấm rèm đỏ của phòng tối có một bóng đen mắt trắng đang đứng im nhìn chằm chằm vào mình!' },
+          { speaker: 'Kiên', text: 'Hít sâu vào Kiên... Mình vẫn phải bước vào trong đó tráng dải phim.' }
+        ]);
+      } else if (anom.id === 'anom_vip' && !f.reacted_vip_ghost) {
+        f.reacted_vip_ghost = true;
+        game.shakeTimer = 0.85;
+        sound.playHorrorSting();
+        sound.playHeartbeat();
+        toggleLens(false);
+        startDialogue([
+          { speaker: 'Kiên', text: 'Trời ơi...!! Lửa cháy bùng lên khắp cửa sổ dán báo, hàng chục bàn tay đang đập điên cuồng vào mặt kính kêu cứu!' },
+          { speaker: 'Kiên', text: 'Còn khói đen thì rỉ ra từ chính chiếc vali da của Phong... Mình phải bật [V] lên CHỤP thẳng vào dị thường đó để lật mặt hắn!' }
+        ]);
+      }
+    }
+
     function toggleLens(force = null) {
       if (!game.lens.unlocked) {
-        showToast('Máy ảnh đang hỏng cò bấm! Hãy tìm dầu máy ở Toa 3 để sửa trước.');
+        showToast('Cò bấm máy ảnh kẹt cứng vì rỉ sét rồi! Hãy tìm dầu máy ở Toa 3 để sửa.');
         return;
       }
       if (game.dialogue.active) return;
       const next = force !== null ? force : !game.lens.active;
       game.lens.active = next;
-      if (!next) { sound.setStaticLock(false); game.lens.lockedAnomaly = null; }
-      else sound.playClick(700);
+      if (!next) {
+        sound.setStaticLock(false);
+        game.lens.lockedAnomaly = null;
+      } else {
+        sound.playClick(700);
+        if (!game.flags.seenCameraFirstOpen) {
+          game.flags.seenCameraFirstOpen = true;
+          game.shakeTimer = 0.35;
+          sound.playHorrorSwell();
+          setTimeout(() => {
+            if (game.lens.active && !game.dialogue.active) {
+              toggleLens(false);
+              startDialogue([
+                { speaker: 'Kiên', text: 'Khoan đã... Cái ống kính này bị sao thế? Sao mọi thứ qua kính nứt lại biến thành màu phim âm bản lạnh lẽo thế này...' },
+                { speaker: 'Kiên', text: 'Để bấm [V] (hoặc Chuột phải) soi thử lên đồng hồ 02:14 và quanh toa xem có gì ẩn giấu không.' }
+              ]);
+            }
+          }, 550);
+        }
+      }
       updateHUD(); renderInventory();
     }
 
@@ -2658,7 +986,7 @@
       sound.playShutter();
 
       const anom = game.lens.lockedAnomaly;
-      if (!anom) { showToast('Tách! Không có dị thường nào trong tâm khung ngắm.'); return; }
+      if (!anom) { showToast('Tách! Khung hình trống trơn, không bắt được dị thường nào.'); return; }
 
       const firstTime = !game.flags[anom.flag];
       game.flags[anom.flag] = true;
@@ -2675,12 +1003,12 @@
       } else if (anom.id === 'anom_clock' && firstTime) {
         setTimeout(() => {
           toggleLens(false);
-          startDialogue([{ speaker: 'Kiên', text: 'Qua kính máy ảnh, quanh đồng hồ 02:14 hiện dòng chữ: "HẮN GIẤU CON DẤU..." — chắc chắn trong Rương Quạ Sắt ở Toa 1!' }]);
+          startDialogue([{ speaker: 'Kiên', text: 'Chụp rõ rồi! Dòng chữ cào ghi: "HẮN GIẤU CON DẤU... BỤNG QUẠ SẮT - TOA 1". Chắc chắn là cái rương ở Toa Hành Lý!' }]);
         }, 420);
       } else if (anom.id === 'anom_sleeper' && firstTime) {
         setTimeout(() => {
           toggleLens(false);
-          startDialogue([{ speaker: 'Kiên', text: 'Dãy số 04-12 và những nốt nhạc ma quái... Quay lại nói với Bà Cầm thôi.' }]);
+          startDialogue([{ speaker: 'Kiên', text: 'Mình đã ghi lại được dãy số 04-12 trên cửa 4B. Quay lại báo cho Bà Cầm thôi.' }]);
         }, 420);
       } else if (anom.id === 'anom_vip' && firstTime) {
         addItem('ledger');
@@ -2690,8 +1018,8 @@
           toggleLens(false);
           startDialogue([
             { speaker: 'Kiên', text: 'Ngọn lửa 5 năm trước... Chính anh đã khóa trái cửa toa tàu đang cháy để độc chiếm lối thoát!' },
-            { speaker: 'Phong', text: 'KHÔNG!! TẮT ÁNH ĐÈN ĐÓ ĐI!!' },
-            { speaker: 'Hệ Thống', text: 'Phong hoảng loạn làm rơi [Sổ Nợ Đẫm Máu] và [Đồng Hồ Trẻ Em Vỡ], rồi tông tung cửa bên lao thẳng ra Sân Ga Sương Mù!' }
+            { speaker: 'Phong', text: 'KHÔNG!! TẮT CÁI ĐÈN CHỚP ĐÓ ĐI!! TÔI KHÔNG MUỐN NHÌN THẤY CHÚNG NỮA!!' },
+            { speaker: 'Hệ Thống', text: 'Phong hoảng loạn làm rơi [Sổ Nợ Đẫm Máu] cùng [Đồng Hồ Trẻ Em Vỡ], rồi tông tung cửa hông lao thẳng ra Sân Ga Sương Mù!' }
           ]);
         }, 480);
       } else if (anom.id === 'anom_platform_phong' && firstTime) {
@@ -2703,178 +1031,7 @@
         }, 650);
       }
     }
-
-    function updateHUD() {
-      document.getElementById('hud-scene-name').textContent = SCENES[game.sceneId].name;
-      const camBtn = document.getElementById('hud-cam-btn');
-      camBtn.classList.toggle('locked', !game.lens.unlocked);
-      camBtn.classList.toggle('active', game.lens.active);
-      document.getElementById('touch-shoot').style.display = game.lens.active ? 'flex' : 'none';
-      drawHudIcons();
-    }
-
-    /* =========================================================================
-       13. 1280x720 CANVAS RENDERER
-       ========================================================================= */
-    const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
-
-    function drawFallbackBackground(scene, isNegative) {
-      ctx.fillStyle = isNegative ? '#182621' : (scene.id === 'platform_zero' ? '#101518' : '#262e28');
-      ctx.fillRect(0, 0, CW, CH);
-      ctx.fillStyle = isNegative ? '#101a16' : '#181b19';
-      ctx.fillRect(0, scene.floorY, CW, CH - scene.floorY);
-      ctx.strokeStyle = '#080908'; ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.moveTo(0, scene.floorY); ctx.lineTo(CW, scene.floorY); ctx.stroke();
-
-      ctx.fillStyle = '#c22e35'; ctx.font = 'bold 22px "Special Elite", monospace'; ctx.textAlign = 'center';
-      ctx.fillText(scene.name + (isNegative ? ' [ÂM BẢN]' : ''), CW / 2, 140);
-    }
-
-    function drawBackgroundLayer(scene, isNegative) {
-      const key = isNegative ? scene.negKey : scene.bgKey;
-      const img = assetManager.get(key);
-      if (img) {
-        ctx.save();
-        if (isNegative && scene.id === 'platform_zero') {
-          ctx.filter = 'invert(82%) hue-rotate(165deg) contrast(135%)';
-        }
-        ctx.drawImage(img, 0, 0, CW, CH);
-        ctx.restore();
-      } else {
-        drawFallbackBackground(scene, isNegative);
-      }
-
-      // Draw creeping shadow entity on Platform Zero in Negative Lens
-      if (isNegative && scene.id === 'platform_zero' && !game.flags.ch2BanishedPhong) {
-        ctx.save();
-        ctx.fillStyle = 'rgba(5, 6, 5, 0.92)';
-        ctx.beginPath();
-        ctx.ellipse(520, 380, 75, 130, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(498, 345, 7, 0, Math.PI * 2);
-        ctx.arc(542, 345, 7, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    function drawSpriteAtFloor(assetKey, x, floorY, targetHeight, flipX = false, fallbackColor = '#666') {
-      const img = assetManager.get(assetKey);
-      ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
-      ctx.beginPath(); ctx.ellipse(x, floorY + 2, targetHeight * 0.22, 9, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-
-      if (img) {
-        const iw = img.width || img.naturalWidth, ih = img.height || img.naturalHeight;
-        const scale = targetHeight / ih;
-        const dw = iw * scale, dh = targetHeight;
-        ctx.save();
-        ctx.translate(x, floorY);
-        if (flipX) ctx.scale(-1, 1);
-        ctx.drawImage(img, -dw / 2, -dh + 10, dw, dh);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = fallbackColor; ctx.strokeStyle = '#080908'; ctx.lineWidth = 3;
-        ctx.fillRect(x - 28, floorY - targetHeight * 0.72, 56, targetHeight * 0.72);
-        ctx.strokeRect(x - 28, floorY - targetHeight * 0.72, 56, targetHeight * 0.72);
-        ctx.beginPath(); ctx.arc(x, floorY - targetHeight * 0.84, 22, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      }
-    }
-
-    function drawKienSprite(x, floorY) {
-      const sheet = assetManager.get('sprite_kien_sheet');
-      const targetH = 260;
-      const flip = game.player.facing < 0;
-
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      ctx.beginPath(); ctx.ellipse(x, floorY + 4, 44, 10, 0, 0, Math.PI * 2); ctx.fill();
-
-      if (sheet) {
-        const sw = sheet.width || sheet.naturalWidth, sh = sheet.height || sheet.naturalHeight;
-        const fw = sw / 4;
-        const frameIdx = game.player.moving ? (1 + (game.player.frame % 3)) : 0;
-        const scale = targetH / sh;
-        const dw = fw * scale, dh = targetH;
-        ctx.save();
-        ctx.translate(x, floorY);
-        if (flip) ctx.scale(-1, 1);
-        ctx.drawImage(sheet, frameIdx * fw, 0, fw, sh, -dw / 2, -dh + 14, dw, dh);
-        ctx.restore();
-      } else {
-        drawSpriteAtFloor('', x, floorY, targetH, flip, '#3b453b');
-      }
-    }
-
-    function drawSceneCharacters(scene) {
-      const fy = scene.floorY;
-      if (scene.id === 'car_coach') {
-        drawSpriteAtFloor('sprite_benam', 945, fy - 4, 178, false, '#d4b43a');
-        if (game.flags.inspectorSpawned && !game.flags.ch1Complete) {
-          drawSpriteAtFloor('sprite_soatve', game.inspectorX, fy + 4, 295, false, '#121514');
-        }
-      } else if (scene.id === 'car_dining') {
-        drawSpriteAtFloor('sprite_bactung', 755, fy + 2, 255, false, '#cfc7b6');
-      } else if (scene.id === 'car_sleeper') {
-        drawSpriteAtFloor('sprite_bacam', 810, fy + 2, 250, false, '#384244');
-      } else if (scene.id === 'car_vip' && !game.flags.ch2PhongFled) {
-        drawSpriteAtFloor('sprite_phong', 840, fy + 2, 252, false, '#2d3b3d');
-      } else if (scene.id === 'platform_zero') {
-        if (!game.flags.ch2BanishedPhong) {
-          drawSpriteAtFloor('sprite_phong', 520, fy + 2, 235, true, '#2d3b3d');
-        } else {
-          // Wax effigy silhouette on bench
-          ctx.fillStyle = '#bfb69e'; ctx.strokeStyle = '#080908'; ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.ellipse(520, fy - 45, 22, 42, 0.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        }
-      }
-      drawKienSprite(game.player.x, fy + 16);
-    }
-
-    function drawHotspotPrompt() {
-      if (game.dialogue.active || game.lens.active) return;
-      const scene = SCENES[game.sceneId];
-      let nearest = null, bestDist = 145;
-
-      scene.hotspots.forEach(h => {
-        if (!h.visible()) return;
-        const hx = h.id === 'npc_soatve' ? game.inspectorX : h.x;
-        const d = Math.abs(game.player.x - hx);
-        if (d < bestDist) { bestDist = d; nearest = h; }
-      });
-      game.activeHotspot = nearest;
-
-      if (nearest) {
-        const hx = nearest.id === 'npc_soatve' ? game.inspectorX : nearest.x;
-        const hy = Math.max(95, nearest.y - 88);
-        const text = typeof nearest.label === 'function' ? nearest.label() : nearest.label;
-        const label = `[E] ${text}`;
-        ctx.font = 'bold 16px "Courier Prime", monospace';
-        const tw = ctx.measureText(label).width + 26;
-        const rx = Math.max(16, Math.min(CW - tw - 16, hx - tw / 2));
-
-        ctx.fillStyle = 'rgba(20, 22, 21, 0.94)';
-        ctx.strokeStyle = nearest.isExit ? '#7fa886' : '#dfc374';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.roundRect(rx, hy, tw, 34, 4); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#f4eee0'; ctx.textAlign = 'center';
-        ctx.fillText(label, rx + tw / 2, hy + 22);
-      }
-    }
-
-    function drawNegativeLens() {
-      if (!game.lens.active) return;
-      game.lens.vx += (game.mouse.x - game.lens.vx) * 0.2;
-      game.lens.vy += (game.mouse.y - game.lens.vy) * 0.2;
-
-      const vw = 440, vh = 330;
-      const vx = Math.max(24, Math.min(CW - vw - 24, game.lens.vx - vw / 2));
-      const vy = Math.max(66, Math.min(CH - vh - 24, game.lens.vy - vh / 2));
-      const cx = vx + vw / 2, cy = vy + vh / 2;
-
+// ... existing code ...
       const scene = SCENES[game.sceneId];
       let locked = null;
       scene.anomalies.forEach(a => {
@@ -2883,209 +1040,24 @@
       game.lens.lockedAnomaly = locked;
       sound.setStaticLock(Boolean(locked));
 
+      // Trigger First-Sight Horror Reaction on first hover over anomaly
+      if (locked && !game.dialogue.active) {
+        triggerFirstSightReaction(locked);
+        if (!game.lens.active) return;
+      }
+
       ctx.fillStyle = 'rgba(4, 6, 5, 0.56)';
-      ctx.fillRect(0, 0, CW, CH);
-
-      const pad = 20;
-      ctx.fillStyle = '#080908';
-      ctx.fillRect(vx - pad, vy - pad, vw + pad * 2, vh + pad * 2);
-
-      ctx.strokeStyle = '#cc2e36'; ctx.lineWidth = 1.6;
-      for (let tx = vx + 12; tx < vx + vw - 12; tx += 14) {
-        const tall = ((tx - vx) % 42 === 12) ? 9 : 5;
-        ctx.beginPath(); ctx.moveTo(tx, vy - 3); ctx.lineTo(tx, vy - 3 - tall); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(tx, vy + vh + 3); ctx.lineTo(tx, vy + vh + 3 + tall); ctx.stroke();
-      }
-      ctx.fillStyle = '#e03a42'; ctx.font = 'bold 14px "Courier Prime", monospace'; ctx.textAlign = 'right';
-      ctx.fillText('4:3', vx + vw - 2, vy - 5);
-
-      ctx.save();
-      ctx.beginPath(); ctx.rect(vx, vy, vw, vh); ctx.clip();
-      drawBackgroundLayer(scene, true);
-      if (scene.id === 'car_coach') drawSpriteAtFloor('sprite_benam', 945, scene.floorY - 4, 178, false, '#d4b43a');
-
-      ctx.fillStyle = 'rgba(225, 242, 232, 0.08)';
-      for (let i = 0; i < 100; i++) ctx.fillRect(vx + Math.random() * vw, vy + Math.random() * vh, 3, 2);
-
-      ctx.strokeStyle = 'rgba(240, 245, 240, 0.72)'; ctx.lineWidth = 2.2;
-      ctx.beginPath(); ctx.moveTo(vx + vw * 0.80, vy); ctx.lineTo(vx + vw * 0.56, vy + vh * 0.44); ctx.lineTo(vx + vw * 0.25, vy + vh); ctx.stroke();
-      ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.moveTo(vx + vw * 0.56, vy + vh * 0.44); ctx.lineTo(vx + vw * 0.75, vy + vh * 0.58); ctx.stroke();
-      ctx.restore();
-
-      const pulse = locked && Math.sin(game.time * 20) > 0;
-      ctx.strokeStyle = locked ? (pulse ? '#ff4750' : '#b8252c') : '#b8292f';
-      ctx.lineWidth = locked ? 3.5 : 2;
-      ctx.strokeRect(vx, vy, vw, vh);
-
-      const cl = 22; ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(vx + 8, vy + 8 + cl); ctx.lineTo(vx + 8, vy + 8); ctx.lineTo(vx + 8 + cl, vy + 8);
-      ctx.moveTo(vx + vw - 8 - cl, vy + 8); ctx.lineTo(vx + vw - 8, vy + 8); ctx.lineTo(vx + vw - 8, vy + 8 + cl);
-      ctx.moveTo(vx + 8, vy + vh - 8 - cl); ctx.lineTo(vx + 8, vy + vh - 8); ctx.lineTo(vx + 8 + cl, vy + vh - 8);
-      ctx.moveTo(vx + vw - 8 - cl, vy + vh - 8); ctx.lineTo(vx + vw - 8, vy + vh - 8); ctx.lineTo(vx + vw - 8, vy + vh - 8 - cl);
-      ctx.stroke();
-
-      ctx.font = 'bold 13px "Courier Prime", monospace'; ctx.textAlign = 'left';
-      ctx.fillStyle = locked ? '#ff5962' : '#d6d0c0';
-      ctx.fillText(locked ? '● KHÓA DỊ THƯỜNG — CLICK / SPACE ĐỂ CHỤP' : 'NEGATIVE LENS ● 02:14', vx + 6, vy + vh + 16);
-    }
-
-    /* =========================================================================
-       14. MAIN LOOP
-       ========================================================================= */
-    let lastTs = 0;
-
-    function loop(ts) {
-      const dt = Math.min(0.05, (ts - lastTs) / 1000 || 0.016);
-      lastTs = ts;
-      if (game && game.started) { update(dt); render(); }
-      requestAnimationFrame(loop);
-    }
-
-    function update(dt) {
-      game.time += dt;
-      if (game.lens.cooldown > 0) game.lens.cooldown = Math.max(0, game.lens.cooldown - dt);
-      if (game.lens.flashAlpha > 0) game.lens.flashAlpha = Math.max(0, game.lens.flashAlpha - dt * 2.4);
-      if (game.flickerTimer > 0) game.flickerTimer = Math.max(0, game.flickerTimer - dt);
-      if (game.shakeTimer > 0) game.shakeTimer = Math.max(0, game.shakeTimer - dt);
-
-      if (game.flags.inspectorSpawned && !game.flags.ch1Complete && game.sceneId === 'car_coach' && game.inspectorX > 1060) {
-        game.inspectorX = Math.max(1060, game.inspectorX - 115 * dt);
-      }
-
-      if (game.fade.dir !== 0) {
-        game.fade.alpha += game.fade.dir * dt * 2.8;
-        if (game.fade.dir === 1 && game.fade.alpha >= 1) {
-          game.fade.alpha = 1;
-          if (game.fade.callback) game.fade.callback();
-          game.fade.callback = null;
-          game.fade.dir = -1;
-        } else if (game.fade.dir === -1 && game.fade.alpha <= 0) {
-          game.fade.alpha = 0; game.fade.dir = 0;
-        }
-      }
-
-      if (game.dialogue.active) {
-        const line = game.dialogue.queue[game.dialogue.index];
-        if (line && game.dialogue.charIndex < line.text.length) {
-          game.dialogue.timer += dt;
-          if (game.dialogue.timer >= 0.024) {
-            game.dialogue.timer = 0;
-            game.dialogue.charIndex++;
-            dlgText.textContent = line.text.slice(0, game.dialogue.charIndex);
-            if (game.dialogue.charIndex % 2 === 0) sound.playVoiceBlip(line.speaker);
-          }
-        }
-        return;
-      }
-
-      if (!game.lens.active && game.fade.dir === 0 && !game.ended && !darkroom.active) {
-        const speed = 280;
-        let move = 0;
-        if (game.keys.left) move -= 1;
-        if (game.keys.right) move += 1;
-        if (move !== 0) {
-          game.player.moving = true;
-          game.player.facing = move;
-          game.player.x = Math.max(70, Math.min(CW - 70, game.player.x + move * speed * dt));
-          game.player.animTime += dt;
-          game.player.frame = Math.floor(game.player.animTime * 7);
-          game.player.stepTimer += dt;
-          if (game.player.stepTimer >= 0.34) { game.player.stepTimer = 0; sound.playFootstep(); }
-        } else {
-          game.player.moving = false; game.player.frame = 0;
-        }
-      } else {
-        game.player.moving = false;
-      }
-    }
-
-    function render() {
-      ctx.clearRect(0, 0, CW, CH);
-      const scene = SCENES[game.sceneId];
-      const trainVib = game.chapter === 1 ? Math.sin(game.time * 22) * 0.75 : 0;
-      const vibY = trainVib + (game.shakeTimer > 0 ? (Math.random() - 0.5) * 10 : 0);
-      const vibX = game.shakeTimer > 0 ? (Math.random() - 0.5) * 7 : 0;
-
-      ctx.save();
-      ctx.translate(vibX, vibY);
-      drawBackgroundLayer(scene, false);
-      drawSceneCharacters(scene);
-      drawHotspotPrompt();
-      drawNegativeLens();
-      ctx.restore();
-
-      const ambientFlicker = (Math.sin(game.time * 13) > 0.97) ? 0.16 : 0;
-      const eventFlicker = (game.flickerTimer > 0 && Math.random() > 0.45) ? 0.55 : 0;
-      if (ambientFlicker + eventFlicker > 0) {
-        ctx.fillStyle = `rgba(4, 5, 4, ${Math.min(0.7, ambientFlicker + eventFlicker)})`;
-        ctx.fillRect(0, 0, CW, CH);
-      }
-
-      if (game.lens.flashAlpha > 0) {
-        ctx.fillStyle = `rgba(255, 252, 245, ${game.lens.flashAlpha})`;
-        ctx.fillRect(0, 0, CW, CH);
-      }
-      if (game.fade.alpha > 0) {
-        ctx.fillStyle = `rgba(5, 6, 5, ${game.fade.alpha})`;
-        ctx.fillRect(0, 0, CW, CH);
-      }
-    }
-
-    /* =========================================================================
-       15. INPUTS & START SEQUENCE
-       ========================================================================= */
-    function canvasCoordsFromEvent(clientX, clientY) {
-      const r = canvas.getBoundingClientRect();
-      return { x: ((clientX - r.left) / r.width) * CW, y: ((clientY - r.top) / r.height) * CH };
-    }
-
-    async function launchGame(startChapter) {
-      sound.init();
-      closeModal('title-screen');
-
-      const loadingEl = document.getElementById('loading-screen');
-      const barFill = document.getElementById('loading-bar-fill');
-      const statusEl = document.getElementById('loading-status');
-      const pctEl = document.getElementById('loading-percent');
-
-      loadingEl.classList.remove('fading-out');
-      openModal('loading-screen');
-
-      await assetManager.loadAllAssets((done, total) => {
-        const pct = Math.round((done / total) * 100);
-        barFill.style.width = `${pct}%`;
-        pctEl.textContent = `${pct}%`;
-        statusEl.textContent = `ĐANG NẠP TÀI NGUYÊN... ${done}/${total}`;
-      });
-
-      statusEl.textContent = 'ĐÃ NẠP XONG! ĐANG VÀO CHUYẾN TÀU...';
-      barFill.style.width = '100%';
-      pctEl.textContent = '100%';
-
-      game = createInitialState(startChapter);
-      drawHudIcons();
-      updateHUD();
-      renderInventory();
-
-      setTimeout(() => {
-        loadingEl.classList.add('fading-out');
-        setTimeout(() => {
-          closeModal('loading-screen');
-          loadingEl.classList.remove('fading-out');
-          game.started = true;
-          sound.playTrainWhistle();
+// ... existing code ...
           if (startChapter === 1) {
             startDialogue([
-              { speaker: 'Kiên', text: 'Ư... đầu mình đau quá. Đây là đâu? Một chuyến tàu xuyên đêm?' },
-              { speaker: 'Kiên', text: 'Đồng hồ chết cứng ở 02:14... Trong túi chỉ có tấm vé trống và chiếc máy ảnh kính nứt bị kẹt cò.' },
-              { speaker: 'Hệ Thống', text: 'Dùng A/D (hoặc ←/→) để đi dọc toa tàu. Hãy thử nói chuyện với cô bé mặc áo mưa vàng ở bên phải.' }
+              { speaker: 'Kiên', text: 'Ư... đầu mình đau như búa bổ. Đây là đâu? Sao mình lại ngồi trên một chuyến tàu xuyên đêm thế này?' },
+              { speaker: 'Kiên', text: 'Chẳng nhớ nổi một mảnh nào... Đồng hồ chết cứng ở 02:14. Trong túi chỉ có tấm vé trắng trơn với chiếc máy ảnh kính nứt kẹt cò.' },
+              { speaker: 'Kiên', text: 'Phía bên phải có một cô bé mặc áo mưa vàng đang ngồi một mình. Lại hỏi thử xem sao.' }
             ]);
           } else {
             startDialogue([
               { speaker: 'Loa Phát Thanh', text: '*RÈ... RÈ...* ĐOÀN TÀU ĐÃ DỪNG TẠI SÂN GA SỐ KHÔNG. HÀNH KHÁCH "TRẦN QUỐC PHONG" VUI LÒNG XUỐNG GA...' },
-              { speaker: 'Kiên', text: 'Chào mừng đến Chương 2: Sân Ga Sương Mù. Hãy nói chuyện với Bà Cầm trước khoang 4B.' }
+              { speaker: 'Kiên', text: 'Tàu dừng hẳn giữa màn sương mù rồi... Trước khoang 4B có một bà cụ ôm đàn violin. Lại nói chuyện với bà ấy xem.' }
             ]);
           }
         }, 420);
@@ -3100,7 +1072,20 @@
       updateHUD();
       renderInventory();
       sound.playTrainWhistle();
-      startDialogue([{ speaker: 'Kiên', text: ch === 1 ? 'Lại là tiếng còi tàu đó... Tôi tỉnh dậy ở Ghế 14.' : 'Đoàn tàu vừa dừng lại tại Sân Ga Số Không...' }]);
+      startDialogue([{ speaker: 'Kiên', text: ch === 1 ? 'Lại là tiếng còi tàu rền vang đó... Mình tỉnh dậy trên Ghế 14.' : 'Đoàn tàu vừa phanh kít lại giữa Sân Ga Số Không...' }]);
+    }
+
+    function syncSettingsUI() {
+      const s = sound.settings;
+      document.getElementById('slider-master').value = Math.round(s.master * 100);
+      document.getElementById('val-master').textContent = Math.round(s.master * 100) + '%';
+      document.getElementById('slider-ambience').value = Math.round(s.ambience * 100);
+      document.getElementById('val-ambience').textContent = Math.round(s.ambience * 100) + '%';
+      document.getElementById('slider-sfx').value = Math.round(s.sfx * 100);
+      document.getElementById('val-sfx').textContent = Math.round(s.sfx * 100) + '%';
+      const muteLabel = sound.enabled ? '🔊 ĐANG BẬT TIẾNG' : '🔇 ĐÃ TẮT TIẾNG';
+      document.getElementById('btn-settings-mute').textContent = muteLabel;
+      document.getElementById('btn-mute').textContent = sound.enabled ? '🔊' : '🔇';
     }
 
     function setupInputs() {
@@ -3111,12 +1096,20 @@
           if (k === 'escape') closeDarkroom();
           return;
         }
-        if (!game || !game.started) return;
 
-        if (document.querySelector('.modal-overlay.visible')) {
-          if (k === 'escape') ['notebook-modal', 'polaroid-modal', 'padlock-modal'].forEach(closeModal);
-          return;
+        if (k === 'escape') {
+          const openSettings = document.getElementById('settings-modal').classList.contains('visible');
+          if (openSettings) { closeModal('settings-modal'); return; }
+          const otherModal = ['notebook-modal', 'polaroid-modal', 'padlock-modal'].find(id => document.getElementById(id).classList.contains('visible'));
+          if (otherModal) { closeModal(otherModal); return; }
+          if (game && game.lens.active) { toggleLens(false); return; }
+          if (game && game.started && !game.dialogue.active) {
+            sound.init(); syncSettingsUI(); openModal('settings-modal'); return;
+          }
         }
+
+        if (!game || !game.started) return;
+        if (document.querySelector('.modal-overlay.visible')) return;
 
         if (game.dialogue.active) {
           if (k === ' ' || k === 'enter' || k === 'e') { e.preventDefault(); advanceDialogue(); }
@@ -3133,91 +1126,31 @@
           if (game.lens.active) shootCamera();
           else if (game.activeHotspot) interactWithHotspot(game.activeHotspot);
         }
-        if (k === 'escape' && game.lens.active) toggleLens(false);
       });
-
-      window.addEventListener('keyup', e => {
-        const k = e.key.toLowerCase();
-        if (darkroom.active && k === ' ') { finishDarkroomHold(); return; }
-        if (!game) return;
-        if (k === 'a' || k === 'arrowleft') game.keys.left = false;
-        if (k === 'd' || k === 'arrowright') game.keys.right = false;
-      });
-
-      const holdBtn = document.getElementById('btn-darkroom-hold');
-      const startHold = e => { e.preventDefault(); darkroom.holding = true; };
-      const endHold = e => { e.preventDefault(); finishDarkroomHold(); };
-      holdBtn.addEventListener('mousedown', startHold);
-      holdBtn.addEventListener('mouseup', endHold);
-      holdBtn.addEventListener('mouseleave', endHold);
-      holdBtn.addEventListener('touchstart', startHold, { passive: false });
-      holdBtn.addEventListener('touchend', endHold, { passive: false });
-
-      canvas.addEventListener('mousemove', e => {
-        if (!game) return;
-        const p = canvasCoordsFromEvent(e.clientX, e.clientY);
-        game.mouse.x = p.x; game.mouse.y = p.y;
-      });
-
-      canvas.addEventListener('contextmenu', e => {
-        e.preventDefault();
-        if (game && game.started && !game.dialogue.active) toggleLens();
-      });
-
-      canvas.addEventListener('click', e => {
-        if (!game || !game.started || game.dialogue.active) return;
-        const p = canvasCoordsFromEvent(e.clientX, e.clientY);
-        game.mouse.x = p.x; game.mouse.y = p.y;
-        if (game.lens.active) { shootCamera(); return; }
-
-        for (const h of SCENES[game.sceneId].hotspots) {
-          if (!h.visible()) continue;
-          const hx = h.id === 'npc_soatve' ? game.inspectorX : h.x;
-          if (Math.abs(p.x - hx) < h.w / 2 + 24 && Math.abs(p.y - h.y) < 120) {
-            if (Math.abs(game.player.x - hx) < 220) interactWithHotspot(h);
-            else showToast('Hãy bước lại gần hơn để tương tác.');
-            return;
-          }
-        }
-      });
-
-      const bindHold = (id, key) => {
-        const el = document.getElementById(id);
-        const on = e => { e.preventDefault(); if (game) game.keys[key] = true; };
-        const off = e => { e.preventDefault(); if (game) game.keys[key] = false; };
-        el.addEventListener('mousedown', on); el.addEventListener('mouseup', off); el.addEventListener('mouseleave', off);
-        el.addEventListener('touchstart', on, { passive: false }); el.addEventListener('touchend', off, { passive: false });
-      };
-      bindHold('touch-left', 'left');
-      bindHold('touch-right', 'right');
-      document.getElementById('touch-e').onclick = () => { if (game.dialogue.active) advanceDialogue(); else interactWithHotspot(game.activeHotspot); };
-      document.getElementById('touch-shoot').onclick = () => shootCamera();
-
-      document.getElementById('hud-cam-btn').onclick = () => toggleLens();
-      document.getElementById('hud-ticket-btn').onclick = () => {
-        sound.playClick(540);
-        showToast(game.flags.stampedTicket ? 'Vé Ga Đá Trắng (02:14) đã đóng dấu & bấm lỗ.' : 'Tấm vé đang TRỐNG. Cần tìm con dấu ở Toa 1 và mực đen ở Toa 3.');
-      };
+// ... existing code ...
       document.getElementById('btn-inv-toggle').onclick = () => toggleInventoryDrawer();
       document.getElementById('btn-notebook').onclick = () => openNotebook();
+      document.getElementById('btn-settings').onclick = () => { sound.init(); syncSettingsUI(); openModal('settings-modal'); };
+      document.getElementById('btn-title-settings').onclick = () => { sound.init(); syncSettingsUI(); openModal('settings-modal'); };
       document.getElementById('btn-mute').onclick = () => {
-        sound.init();
-        document.getElementById('btn-mute').textContent = sound.toggle() ? '🔊' : '🔇';
+        sound.init(); sound.toggle(); syncSettingsUI();
       };
+      document.getElementById('btn-settings-mute').onclick = () => {
+        sound.init(); sound.toggle(); syncSettingsUI();
+      };
+
+      ['master', 'ambience', 'sfx'].forEach(type => {
+        const el = document.getElementById('slider-' + type);
+        el.addEventListener('input', () => {
+          sound.init();
+          const v = parseInt(el.value, 10);
+          sound.setVolume(type, v / 100);
+          document.getElementById('val-' + type).textContent = v + '%';
+        });
+      });
 
       document.getElementById('btn-start-ch1').onclick = () => launchGame(1);
       document.getElementById('btn-start-ch2').onclick = () => launchGame(2);
+      syncSettingsUI();
     }
-
-    window.onload = function () {
-      game = createInitialState(1);
-      setupInputs();
-      drawHudIcons();
-      renderInventory();
-      updateHUD();
-      assetManager.probeTitleBackground();
-      requestAnimationFrame(loop);
-    };
-  </script>
-</body>
-</html>
+// ... existing code ...

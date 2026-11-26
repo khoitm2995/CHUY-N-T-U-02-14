@@ -1,40 +1,574 @@
-<!-- ... existing code ... -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CHUYẾN TÀU 02:14 — The 02:14 Express</title>
   <style>
-    :root {
-      --bg-void: #060706;
-      --charcoal: #2c2d2e;
-      --ink: #080908;
-      --ochre: #dfc374;
-<!-- ... existing code ... -->
-    .ending-quote {
-      font-family: 'Patrick Hand', sans-serif;
-      font-size: 1.24rem;
-      color: var(--paper);
-      line-height: 1.48;
-      border-left: 3px solid var(--blood);
-      padding-left: 14px;
-      margin: 16px 0 22px 0;
-      text-align: left;
+    /* CRITICAL: Never allow a blank white screen */
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #0a0c0d;
+      color: #e2e4e6;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    /* Settings Audio Sliders */
+    :root {
+      --bg-void: #0a0c0d;
+      --panel: #1b1d1e;
+      --panel-light: #282b2c;
+      --ink: #070808;
+      --paper: #dcd6c4;
+      --ochre: #dfc374;
+      --blood: #b83232;
+      --muted: #8b9296;
+    }
+
+    * { box-sizing: border-box; }
+
+    /* Global Error Debug Box */
+    #debug-error-box {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 99999;
+      background: rgba(120, 18, 18, 0.96);
+      color: #fff;
+      border: 2px solid #ff6b6b;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      max-height: 40vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+    }
+
+    /* Main Stage Container */
+    #game-wrapper {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0c0d;
+    }
+
+    #stage {
+      position: relative;
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16));
+      background: #0d1011;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.95);
+      border: 2px solid #1e2224;
+    }
+
+    #game-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    /* HUD Top Left & Top Right */
+    #hud-top-left {
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      z-index: 20;
+    }
+
+    .hud-badge {
+      background: rgba(16, 18, 19, 0.88);
+      border: 2px solid #070808;
+      box-shadow: 2px 2px 0 #000, inset 0 0 0 1px #3a3f42;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--paper);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.12s, border-color 0.15s;
+    }
+
+    .hud-badge:hover {
+      transform: translateY(-1px);
+      border-color: var(--ochre);
+    }
+
+    .hud-badge.active {
+      border-color: var(--blood);
+      color: #ff9c9c;
+      box-shadow: 0 0 12px rgba(184, 50, 50, 0.5);
+    }
+
+    #hud-top-right {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      z-index: 20;
+    }
+
+    .scene-tag {
+      background: rgba(14, 16, 17, 0.9);
+      border: 2px solid #070808;
+      box-shadow: 2px 2px 0 #000, inset 0 0 0 1px #34393b;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--paper);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .scene-tag .clock {
+      color: var(--blood);
+      font-weight: 800;
+      letter-spacing: 1px;
+      font-family: monospace;
+    }
+
+    .ink-btn {
+      background: #1f2224;
+      color: var(--paper);
+      border: 2px solid #070808;
+      box-shadow: 2px 2px 0 #000, inset 0 0 0 1px #42484b;
+      padding: 6px 11px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .ink-btn:hover {
+      background: #2f3437;
+      color: var(--ochre);
+      transform: translateY(-1px);
+    }
+
+    /* Toast Notifications */
+    #toast-container {
+      position: absolute;
+      top: 58px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      width: 90%;
+      max-width: 560px;
+    }
+
+    .toast {
+      background: rgba(18, 20, 21, 0.94);
+      border: 2px solid #3c4245;
+      border-left: 4px solid var(--ochre);
+      color: var(--paper);
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-size: 13.5px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.75);
+      animation: fadeSlideIn 0.2s ease-out;
+      text-align: center;
+    }
+
+    .toast.horror {
+      border-left-color: var(--blood);
+      color: #ffd6d6;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Sally Face Style Dialogue Box */
+    #dialogue-box {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92%;
+      max-width: 980px;
+      min-height: 126px;
+      background: rgba(24, 26, 27, 0.96);
+      border: 3px solid #060707;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.85), inset 0 0 0 2px #474d50;
+      border-radius: 4px;
+      display: none;
+      align-items: stretch;
+      padding: 12px;
+      gap: 14px;
+      z-index: 35;
+      cursor: pointer;
+    }
+
+    #dialogue-portrait-wrap {
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+      background: #111314;
+      border: 2px solid #060707;
+      box-shadow: inset 0 0 0 1px #4a5054;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #dialogue-portrait {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #dialogue-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    #dialogue-speaker {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ochre);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    #dialogue-text {
+      font-size: 16px;
+      line-height: 1.48;
+      color: #ece8dc;
+      min-height: 52px;
+    }
+
+    #dialogue-next {
+      align-self: flex-end;
+      font-size: 12px;
+      color: var(--muted);
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.35; }
+      50% { opacity: 1; }
+    }
+
+    /* Inventory Drawer */
+    #inventory-drawer {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92%;
+      max-width: 820px;
+      background: rgba(20, 22, 23, 0.96);
+      border: 3px solid #060707;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.9), inset 0 0 0 1px #484f52;
+      border-radius: 6px;
+      padding: 12px 14px;
+      z-index: 30;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .inv-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--ochre);
+      border-bottom: 1px solid #313638;
+      padding-bottom: 6px;
+    }
+
+    #inv-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 68px;
+    }
+
+    .inv-slot {
+      width: 118px;
+      background: #141617;
+      border: 2px solid #353b3e;
+      border-radius: 4px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      text-align: center;
+    }
+
+    .inv-slot:hover {
+      border-color: var(--ochre);
+      background: #1f2325;
+    }
+
+    .inv-slot.selected {
+      border-color: var(--blood);
+      background: #2b1818;
+      box-shadow: 0 0 10px rgba(184, 50, 50, 0.45);
+    }
+
+    .inv-slot canvas {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+
+    .inv-slot-name {
+      font-size: 11.5px;
+      color: var(--paper);
+      line-height: 1.2;
+    }
+
+    #inv-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      min-height: 18px;
+    }
+
+    /* Fullscreen Overlays (Title, Loading, Modals) */
+    .screen-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0a0c0d;
+    }
+
+    #title-screen {
+      background-size: cover;
+      background-position: center;
+      justify-content: space-between;
+      padding: 40px 24px 20px;
+    }
+
+    .title-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(10,12,13,0.35) 0%, rgba(5,6,7,0.92) 85%);
+      pointer-events: none;
+    }
+
+    .title-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      margin-top: 24px;
+    }
+
+    .title-main {
+      font-size: clamp(32px, 5vw, 58px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #eae4d3;
+      text-shadow: 4px 4px 0 #000, 0 0 24px rgba(184, 50, 50, 0.55);
+      margin: 0;
+    }
+
+    .title-sub {
+      font-size: clamp(14px, 2vw, 19px);
+      color: var(--ochre);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 6px;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .title-actions {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 340px;
+      margin-top: 28px;
+    }
+
+    .btn-primary {
+      background: #7c2222;
+      color: #f4efe2;
+      border: 2px solid #060707;
+      box-shadow: 3px 3px 0 #000, inset 0 0 0 1px #b54545;
+      padding: 13px 20px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: transform 0.12s, background 0.15s;
+    }
+
+    .btn-primary:hover {
+      background: #9c2b2b;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: rgba(24, 27, 29, 0.92);
+      color: var(--paper);
+      border: 2px solid #060707;
+      box-shadow: 3px 3px 0 #000, inset 0 0 0 1px #4a5256;
+      padding: 11px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: transform 0.12s, background 0.15s;
+    }
+
+    .btn-secondary:hover {
+      background: #2b3033;
+      color: var(--ochre);
+      transform: translateY(-1px);
+    }
+
+    .title-footer {
+      position: relative;
+      z-index: 2;
+      font-size: 12.5px;
+      color: #a9b0b5;
+      background: rgba(8, 10, 11, 0.78);
+      padding: 8px 16px;
+      border-radius: 4px;
+      border: 1px solid #2b3033;
+      text-align: center;
+    }
+
+    /* Loading Screen */
+    #loading-screen {
+      display: none;
+      z-index: 60;
+      gap: 14px;
+    }
+
+    .loading-title {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: var(--ochre);
+    }
+
+    .loading-bar-wrap {
+      width: min(82%, 440px);
+      height: 16px;
+      background: #16191b;
+      border: 2px solid #3c4347;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #loading-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #7c2222, #dfc374);
+      transition: width 0.12s linear;
+    }
+
+    #loading-status {
+      font-size: 13px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+
+    /* Generic Modal Overlay */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 6, 7, 0.82);
+      z-index: 70;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--panel);
+      border: 3px solid #060707;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.9), inset 0 0 0 1px #4b5256;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 460px;
+      padding: 18px 20px;
+      color: var(--paper);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #353b3f;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 17px;
+      color: var(--ochre);
+      letter-spacing: 1px;
+    }
+
+    /* Settings Sliders */
     .settings-row {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      margin-bottom: 14px;
-      background: #1a1c1b;
-      border: 1.5px solid #3c403c;
+      margin-bottom: 12px;
+      background: #141617;
+      border: 1px solid #34393c;
       padding: 10px 12px;
-      border-radius: 3px;
+      border-radius: 4px;
     }
 
     .settings-row-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      font-size: 0.88rem;
-      color: var(--paper);
+      font-size: 13.5px;
     }
 
     .settings-val {
@@ -48,72 +582,526 @@
       cursor: pointer;
     }
 
-    @media (max-width: 720px) {
-<!-- ... existing code ... -->
+    /* Padlock 214 */
+    .padlock-digits {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin: 18px 0;
+    }
+
+    .digit-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .digit-box {
+      width: 58px;
+      height: 66px;
+      background: #0e1011;
+      border: 2px solid #52595d;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 900;
+      color: var(--ochre);
+      font-family: monospace;
+    }
+
+    /* Darkroom Minigame */
+    .darkroom-meter {
+      position: relative;
+      width: 100%;
+      height: 28px;
+      background: #101213;
+      border: 2px solid #444b4f;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 14px 0;
+    }
+
+    .darkroom-zone {
+      position: absolute;
+      left: 64%;
+      width: 20%;
+      top: 0;
+      bottom: 0;
+      background: rgba(223, 195, 116, 0.35);
+      border-left: 2px solid var(--ochre);
+      border-right: 2px solid var(--ochre);
+    }
+
+    #darkroom-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #5e1818, #c73838);
+    }
+
+    /* Polaroid Modal */
+    .polaroid-frame {
+      background: #e6dfd0;
+      color: #1a1917;
+      padding: 12px 12px 24px;
+      border-radius: 2px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.85);
+      text-align: center;
+    }
+
+    .polaroid-img {
+      width: 100%;
+      height: 210px;
+      background: #111415;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a8d8d0;
+      font-family: monospace;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 6px;
+      margin-bottom: 12px;
+      border: 2px solid #222;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .polaroid-caption {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    /* Mobile Touch Controls */
+    #touch-controls {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      display: none;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 25;
+    }
+
+    .touch-group {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .touch-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      background: rgba(20, 23, 25, 0.8);
+      border: 2px solid #485054;
+      color: var(--paper);
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      #touch-controls { display: flex; }
+    }
+  </style>
+</head>
+<body>
+  <div id="debug-error-box"></div>
+
+  <div id="game-wrapper">
+    <div id="stage">
+      <canvas id="game-canvas" width="1280" height="720"></canvas>
+
+      <!-- TOP-LEFT HUD -->
+      <div id="hud-top-left">
+        <div id="hud-cam-btn" class="hud-badge" title="Máy Ảnh Kính Nứt [V / Chuột phải]">
+          📷 <span id="hud-cam-label">Máy ảnh [Kẹt cò]</span>
+        </div>
+        <div id="hud-ticket-btn" class="hud-badge" title="Tấm Vé Tàu">
+          🎫 <span id="hud-ticket-label">Vé trống</span>
+        </div>
+      </div>
+
       <!-- TOP-RIGHT HUD -->
       <div id="hud-top-right">
         <div class="scene-tag">
           <span id="hud-scene-name">Toa 2: Toa Ghế Cứng</span>
           <span class="clock">02:14</span>
         </div>
-        <button id="btn-inv-toggle" class="ink-btn" title="Mở/Đóng Túi Đồ [I]">🎒 Túi [I]</button>
-        <button id="btn-notebook" class="ink-btn" title="Sổ Tay Manh Mối">📓 Sổ</button>
-        <button id="btn-settings" class="ink-btn" title="Cài Đặt Âm Thanh [ESC]">⚙</button>
-        <button id="btn-mute" class="ink-btn" title="Bật/Tắt Âm Thanh">🔊</button>
+        <button id="btn-inv-toggle" class="ink-btn">🎒 Túi [I]</button>
+        <button id="btn-settings" class="ink-btn" title="Cài đặt [ESC]">⚙</button>
+        <button id="btn-mute" class="ink-btn" title="Bật/Tắt tiếng">🔊</button>
       </div>
 
       <!-- TOASTS -->
-<!-- ... existing code ... -->
-      <div class="title-actions">
-        <button id="btn-start-ch1" class="btn-primary">BẮT ĐẦU (CHƯƠNG 1)</button>
-        <button id="btn-start-ch2" class="btn-secondary">CHƠI CHƯƠNG 2 (SÂN GA SƯƠNG MÙ)</button>
-        <button id="btn-title-settings" class="btn-secondary">⚙ CÀI ĐẶT</button>
+      <div id="toast-container"></div>
+
+      <!-- DIALOGUE BOX -->
+      <div id="dialogue-box">
+        <div id="dialogue-portrait-wrap">
+          <canvas id="dialogue-portrait" width="100" height="100"></canvas>
+        </div>
+        <div id="dialogue-content">
+          <div>
+            <div id="dialogue-speaker">KIÊN</div>
+            <div id="dialogue-text"></div>
+          </div>
+          <div id="dialogue-next">Nhấn [E / Space / Click] để tiếp tục ▾</div>
+        </div>
       </div>
-    </div>
-    <div class="title-footer">
-      <b>[A/D]</b>: Di chuyển &nbsp;|&nbsp; <b>[E]</b>: Tương tác &nbsp;|&nbsp; <b>[V / Chuột phải]</b>: Máy ảnh Kính Nứt &nbsp;|&nbsp; <b>[I]</b>: Túi đồ &nbsp;|&nbsp; <b>[ESC]</b>: Cài đặt
+
+      <!-- INVENTORY DRAWER -->
+      <div id="inventory-drawer">
+        <div class="inv-header">
+          <span>🎒 TÚI ĐỒ — Chọn 1 món rồi chọn món thứ 2 để GHÉP ĐỒ</span>
+          <button class="ink-btn" onclick="toggleInventory(false)">Đóng [I]</button>
+        </div>
+        <div id="inv-grid"></div>
+        <div id="inv-desc">Chưa chọn vật phẩm nào.</div>
+      </div>
+
+      <!-- TOUCH CONTROLS (Mobile) -->
+      <div id="touch-controls">
+        <div class="touch-group">
+          <button id="touch-left" class="touch-btn">◀</button>
+          <button id="touch-right" class="touch-btn">▶</button>
+        </div>
+        <div class="touch-group">
+          <button id="touch-interact" class="touch-btn">E</button>
+          <button id="touch-lens" class="touch-btn">📷</button>
+        </div>
+      </div>
+
+      <!-- TITLE SCREEN -->
+      <div id="title-screen" class="screen-overlay">
+        <div class="title-vignette"></div>
+        <div class="title-content">
+          <h1 class="title-main">CHUYẾN TÀU 02:14</h1>
+          <div class="title-sub">The 02:14 Express</div>
+        </div>
+        <div class="title-actions">
+          <button id="btn-start-ch1" class="btn-primary">BẮT ĐẦU (CHƯƠNG 1)</button>
+          <button id="btn-start-ch2" class="btn-secondary">CHƠI CHƯƠNG 2 (SÂN GA SƯƠNG MÙ)</button>
+          <button id="btn-title-settings" class="btn-secondary">⚙ CÀI ĐẶT</button>
+        </div>
+        <div class="title-footer">
+          <b>[A/D]</b> Di chuyển &nbsp;|&nbsp; <b>[E / Click]</b> Tương tác &nbsp;|&nbsp; <b>[V / Chuột phải]</b> Kính Nứt &nbsp;|&nbsp; <b>[I]</b> Túi đồ &nbsp;|&nbsp; <b>[ESC]</b> Cài đặt
+        </div>
+      </div>
+
+      <!-- LOADING SCREEN -->
+      <div id="loading-screen" class="screen-overlay">
+        <div class="loading-title">LOADING...</div>
+        <div class="loading-bar-wrap">
+          <div id="loading-bar-fill"></div>
+        </div>
+        <div id="loading-status">ĐANG NẠP TÀI NGUYÊN... 0/28</div>
+      </div>
+
+      <!-- SETTINGS MODAL -->
+      <div id="settings-modal" class="modal-overlay">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h2 class="modal-title">⚙ CÀI ĐẶT ÂM THANH</h2>
+            <button class="ink-btn" onclick="closeModal('settings-modal')">ĐÓNG</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-top">
+              <span>Âm lượng Tổng (Master)</span>
+              <span id="val-master" class="settings-val">85%</span>
+            </div>
+            <input id="slider-master" class="settings-slider" type="range" min="0" max="100" value="85" />
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-top">
+              <span>Môi trường & Nhạc nền (Ambience/BGM)</span>
+              <span id="val-ambience" class="settings-val">75%</span>
+            </div>
+            <input id="slider-ambience" class="settings-slider" type="range" min="0" max="100" value="75" />
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-top">
+              <span>Hiệu ứng & Giọng thoại (SFX)</span>
+              <span id="val-sfx" class="settings-val">90%</span>
+            </div>
+            <input id="slider-sfx" class="settings-slider" type="range" min="0" max="100" value="90" />
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <button id="btn-settings-mute" class="ink-btn">🔊 ĐANG BẬT TIẾNG</button>
+            <span style="font-size:11.5px; color:var(--muted);">Tự lưu cấu hình • Hỗ trợ ./assets/audio/*.mp3</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PADLOCK MODAL (214) -->
+      <div id="padlock-modal" class="modal-overlay">
+        <div class="modal-card" style="max-width:360px; text-align:center;">
+          <div class="modal-header">
+            <h2 class="modal-title">🔒 RƯƠNG QUẠ SẮT</h2>
+            <button class="ink-btn" onclick="closeModal('padlock-modal')">ĐÓNG</button>
+          </div>
+          <div style="font-size:13px; color:var(--muted);">Nhập mật mã 3 chữ số khắc dưới sàn Toa 1:</div>
+          <div class="padlock-digits">
+            <div class="digit-col">
+              <button class="ink-btn" onclick="stepPadlock(0, 1)">▲</button>
+              <div id="pad-d0" class="digit-box">0</div>
+              <button class="ink-btn" onclick="stepPadlock(0, -1)">▼</button>
+            </div>
+            <div class="digit-col">
+              <button class="ink-btn" onclick="stepPadlock(1, 1)">▲</button>
+              <div id="pad-d1" class="digit-box">0</div>
+              <button class="ink-btn" onclick="stepPadlock(1, -1)">▼</button>
+            </div>
+            <div class="digit-col">
+              <button class="ink-btn" onclick="stepPadlock(2, 1)">▲</button>
+              <div id="pad-d2" class="digit-box">0</div>
+              <button class="ink-btn" onclick="stepPadlock(2, -1)">▼</button>
+            </div>
+          </div>
+          <button class="btn-primary" style="width:100%;" onclick="checkPadlock()">MỞ KHÓA</button>
+        </div>
+      </div>
+
+      <!-- DARKROOM MINIGAME MODAL -->
+      <div id="darkroom-modal" class="modal-overlay">
+        <div class="modal-card" style="text-align:center;">
+          <div class="modal-header">
+            <h2 class="modal-title">🎞 PHÒNG TỐI TRÁNG PHIM</h2>
+            <button class="ink-btn" onclick="closeDarkroom()">THOÁT</button>
+          </div>
+          <div style="font-size:13.5px; color:var(--paper); line-height:1.45;">
+            Nhấn giữ nút bên dưới (hoặc phím <b>SPACE</b>) để ngâm dải phim vào thuốc hiện hình.<br/>
+            <b>Thả tay đúng vùng vàng (64% – 84%)</b> để khôi phục bức ảnh!
+          </div>
+          <div class="darkroom-meter">
+            <div class="darkroom-zone"></div>
+            <div id="darkroom-fill"></div>
+          </div>
+          <div id="darkroom-status" style="font-family:monospace; color:var(--ochre); margin-bottom:14px;">SẴN SÀNG... 0%</div>
+          <button id="btn-darkroom-hold" class="btn-primary" style="width:100%;">NHẤN GIỮ ĐỂ NGÂM PHIM</button>
+        </div>
+      </div>
+
+      <!-- POLAROID VIEWER MODAL -->
+      <div id="polaroid-modal" class="modal-overlay">
+        <div class="modal-card" style="max-width:380px;">
+          <div class="modal-header">
+            <h2 class="modal-title">🖼 ẢNH POLAROID</h2>
+            <button class="ink-btn" onclick="closeModal('polaroid-modal')">ĐÓNG</button>
+          </div>
+          <div class="polaroid-frame">
+            <div id="polaroid-img-box" class="polaroid-img">2 - 1 - 4</div>
+            <div id="polaroid-caption" class="polaroid-caption"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAPTER TRANSITION CARD -->
+      <div id="chapter-card" class="modal-overlay" style="background:#050607;">
+        <div style="text-align:center;">
+          <div style="color:var(--blood); letter-spacing:4px; font-weight:800; font-size:15px;">CHƯƠNG 2</div>
+          <h1 style="color:var(--paper); font-size:38px; letter-spacing:3px; margin:8px 0;">SÂN GA SƯƠNG MÙ</h1>
+          <div style="color:var(--ochre); font-size:14px; letter-spacing:2px;">PLATFORM ZERO — 02:14</div>
+        </div>
+      </div>
+
+      <!-- ENDING MODAL (CH2) -->
+      <div id="ending-modal" class="modal-overlay">
+        <div class="modal-card" style="max-width:520px; text-align:center;">
+          <div style="color:var(--blood); font-weight:800; letter-spacing:3px; font-size:13px;">KẾT THÚC CHƯƠNG 2</div>
+          <h2 style="color:var(--ochre); font-size:26px; margin:8px 0 12px;">HÌNH NỘM TRONG SƯƠNG MÙ</h2>
+          <p style="font-size:14.5px; line-height:1.55; color:var(--paper); text-align:left; border-left:3px solid var(--blood); padding-left:12px;">
+            Ánh đèn flash lóe lên giữa màn sương đặc. Thay vì xua đuổi bóng đen, nó chiếu sáng tội lỗi 5 năm trước của Phong — kẻ đã khóa trái cửa toa tàu đang cháy để độc chiếm lối thoát.<br/><br/>
+            Khi ánh sáng tắt lịm, Phong đã biến mất vào màn đêm. Trên băng ghế gỗ chỉ còn lại một hình nộm bằng sáp lạnh ngắt... và tiếng còi tàu lại rền vang gọi tên hành khách tiếp theo.
+          </p>
+          <div style="display:flex; gap:10px; justify-content:center; margin-top:18px;">
+            <button class="btn-primary" onclick="restartGame(1)">CHƠI LẠI TỪ CHƯƠNG 1</button>
+            <button class="btn-secondary" onclick="restartGame(2)">CHƠI LẠI CHƯƠNG 2</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- AUDIO SETTINGS MODAL -->
-  <div id="settings-modal" class="modal-overlay">
-    <div class="modal-card" style="max-width:440px;">
-      <div class="modal-header">
-        <h2 class="modal-title">⚙ CÀI ĐẶT ÂM THANH</h2>
-        <button class="btn-close" onclick="closeModal('settings-modal')">ĐÓNG</button>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-top">
-          <span>Âm lượng Tổng (Master)</span>
-          <span id="val-master" class="settings-val">85%</span>
-        </div>
-        <input id="slider-master" class="settings-slider" type="range" min="0" max="100" value="85" />
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-top">
-          <span>Môi trường & Nhạc nền (Ambience)</span>
-          <span id="val-ambience" class="settings-val">75%</span>
-        </div>
-        <input id="slider-ambience" class="settings-slider" type="range" min="0" max="100" value="75" />
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-top">
-          <span>Hiệu ứng & Giọng thoại (SFX)</span>
-          <span id="val-sfx" class="settings-val">90%</span>
-        </div>
-        <input id="slider-sfx" class="settings-slider" type="range" min="0" max="100" value="90" />
-      </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:6px;">
-        <button id="btn-settings-mute" class="ink-btn">🔊 ĐANG BẬT TIẾNG</button>
-        <span style="font-size:0.72rem; color:var(--muted);">Tự lưu cấu hình • Hỗ trợ ./assets/audio/*.mp3</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- AUTOMATIC LOADING SCREEN -->
-<!-- ... existing code ... -->
+  <script>
     /* =========================================================================
-       2. WEB AUDIO API + OPTIONAL MP3 SOUND ENGINE (WITH LOCALSTORAGE SETTINGS)
+       0. GLOBAL ERROR HANDLER (NEVER FAIL SILENTLY)
+       ========================================================================= */
+    function showFatalError(msg) {
+      var box = document.getElementById('debug-error-box');
+      if (box) {
+        box.style.display = 'block';
+        box.textContent += '[ERROR] ' + msg + '\n';
+      }
+      console.error(msg);
+    }
+
+    window.onerror = function (message, source, lineno, colno) {
+      showFatalError(message + ' (Line ' + lineno + ':' + colno + ')');
+      return false;
+    };
+
+    window.onunhandledrejection = function (event) {
+      showFatalError('Unhandled Promise Rejection: ' + (event.reason ? (event.reason.message || event.reason) : 'Unknown'));
+    };
+
+    /* =========================================================================
+       1. ASSET LOADER (28 ASSETS, 2000ms TIMEOUT, CORS-SAFE FLOOD FILL)
+       ========================================================================= */
+    const ASSET_KEYS = [
+      'bg_title', 'bg_platform_zero',
+      'bg_car_luggage', 'bg_car_coach', 'bg_car_dining',
+      'bg_car_sleeper', 'bg_car_mail', 'bg_car_vip',
+      'bg_car_luggage_neg', 'bg_car_coach_neg', 'bg_car_dining_neg',
+      'bg_car_sleeper_neg', 'bg_car_mail_neg', 'bg_car_vip_neg',
+      'sprite_kien_sheet', 'sprite_benam', 'sprite_bactung',
+      'sprite_soatve', 'sprite_bacam', 'sprite_phong',
+      'portrait_kien', 'portrait_benam', 'portrait_bactung',
+      'portrait_soatve', 'portrait_bacam', 'portrait_phong',
+      'items_sheet', 'items_ch2_sheet'
+    ];
+
+    const SPRITE_KEYS = new Set([
+      'sprite_kien_sheet', 'sprite_benam', 'sprite_bactung',
+      'sprite_soatve', 'sprite_bacam', 'sprite_phong',
+      'items_sheet', 'items_ch2_sheet'
+    ]);
+
+    const ASSETS = {};
+
+    function removeWhiteBackgroundSafe(img) {
+      try {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        if (!w || !h) return img;
+        const off = document.createElement('canvas');
+        off.width = w;
+        off.height = h;
+        const octx = off.getContext('2d');
+        octx.drawImage(img, 0, 0);
+        const imgData = octx.getImageData(0, 0, w, h); // Throws on CORS taint -> caught below
+        const data = imgData.data;
+        const visited = new Uint8Array(w * h);
+        const queue = [];
+
+        function isNearWhite(idx) {
+          const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
+          return a > 10 && r > 232 && g > 232 && b > 232;
+        }
+
+        // Seed borders
+        for (let x = 0; x < w; x++) {
+          queue.push(x, (h - 1) * w + x);
+        }
+        for (let y = 1; y < h - 1; y++) {
+          queue.push(y * w, y * w + (w - 1));
+        }
+
+        let head = 0;
+        while (head < queue.length) {
+          const p = queue[head++];
+          if (visited[p]) continue;
+          visited[p] = 1;
+          const idx = p * 4;
+          if (!isNearWhite(idx)) continue;
+          data[idx + 3] = 0;
+          const x = p % w;
+          const y = (p - x) / w;
+          if (x > 0 && !visited[p - 1]) queue.push(p - 1);
+          if (x < w - 1 && !visited[p + 1]) queue.push(p + 1);
+          if (y > 0 && !visited[p - w]) queue.push(p - w);
+          if (y < h - 1 && !visited[p + w]) queue.push(p + w);
+        }
+
+        octx.putImageData(imgData, 0, 0);
+        return off;
+      } catch (e) {
+        // CORS or Tainted Canvas fallback: return original image safely
+        return img;
+      }
+    }
+
+    function loadSingleImageWithTimeout(url, timeoutMs) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        let settled = false;
+        const timer = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            img.src = '';
+            resolve(null);
+          }
+        }, timeoutMs);
+
+        img.onload = () => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            resolve(img);
+          }
+        };
+        img.onerror = () => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            resolve(null);
+          }
+        };
+        img.src = url;
+      });
+    }
+
+    async function loadAssetKey(key) {
+      const exts = ['.png', '.jpg', '.jpeg'];
+      const deadline = Date.now() + 2000;
+      for (const ext of exts) {
+        const remaining = deadline - Date.now();
+        if (remaining <= 50) break;
+        const img = await loadSingleImageWithTimeout('./assets/' + key + ext, remaining);
+        if (img) {
+          return SPRITE_KEYS.has(key) ? removeWhiteBackgroundSafe(img) : img;
+        }
+      }
+      return null;
+    }
+
+    let assetsLoadedOnce = false;
+    async function preloadAllAssets(onProgress) {
+      if (assetsLoadedOnce) {
+        if (onProgress) onProgress(ASSET_KEYS.length, ASSET_KEYS.length);
+        return;
+      }
+      let done = 0;
+      const total = ASSET_KEYS.length;
+      const tasks = ASSET_KEYS.map(async (key) => {
+        const res = await loadAssetKey(key);
+        ASSETS[key] = res;
+        done++;
+        if (onProgress) onProgress(done, total);
+      });
+      await Promise.all(tasks);
+      assetsLoadedOnce = true;
+    }
+
+    // Try loading title background silently on initial page load
+    (async function initTitleBg() {
+      const bg = (await loadAssetKey('bg_title')) || (await loadAssetKey('bg_platform_zero'));
+      if (bg) {
+        ASSETS['bg_title'] = bg;
+        const ts = document.getElementById('title-screen');
+        if (ts && bg.src) ts.style.backgroundImage = 'url("' + bg.src + '")';
+      }
+    })();
+
+    /* =========================================================================
+       2. AUDIO ENGINE (OPTIONAL MP3 + WEB AUDIO API FALLBACK + LOCALSTORAGE)
        ========================================================================= */
     class SoundEngine {
       constructor() {
@@ -123,21 +1111,22 @@
         this.staticNode = null;
         this.isStaticPlaying = false;
         this.onPlatform = false;
-        this.mp3Tracks = {};
+        this.inTitle = true;
+        this.mp3 = {};
         this.settings = this.loadSettings();
         this.enabled = !this.settings.muted;
       }
 
       loadSettings() {
         try {
-          const raw = localStorage.getItem('train0214_audio_settings');
+          const raw = localStorage.getItem('train0214_audio_v2');
           if (raw) {
-            const parsed = JSON.parse(raw);
+            const p = JSON.parse(raw);
             return {
-              master: typeof parsed.master === 'number' ? parsed.master : 0.85,
-              ambience: typeof parsed.ambience === 'number' ? parsed.ambience : 0.75,
-              sfx: typeof parsed.sfx === 'number' ? parsed.sfx : 0.90,
-              muted: Boolean(parsed.muted)
+              master: typeof p.master === 'number' ? p.master : 0.85,
+              ambience: typeof p.ambience === 'number' ? p.ambience : 0.75,
+              sfx: typeof p.sfx === 'number' ? p.sfx : 0.90,
+              muted: Boolean(p.muted)
             };
           }
         } catch (e) {}
@@ -145,46 +1134,59 @@
       }
 
       saveSettings() {
-        try {
-          localStorage.setItem('train0214_audio_settings', JSON.stringify(this.settings));
-        } catch (e) {}
+        try { localStorage.setItem('train0214_audio_v2', JSON.stringify(this.settings)); } catch (e) {}
       }
 
-      getAmbGain() { return this.enabled ? this.settings.master * this.settings.ambience : 0; }
-      getSfxGain() { return this.enabled ? this.settings.master * this.settings.sfx : 0; }
+      getAmb() { return this.enabled ? this.settings.master * this.settings.ambience : 0; }
+      getSfx() { return this.enabled ? this.settings.master * this.settings.sfx : 0; }
 
-      setVolume(type, normVal) {
-        this.settings[type] = Math.max(0, Math.min(1, normVal));
+      setVolume(type, val) {
+        this.settings[type] = Math.max(0, Math.min(1, val));
         this.saveSettings();
-        this.updateAmbienceLevels();
+        this.updateAmbience();
+      }
+
+      toggleMute() {
+        this.enabled = !this.enabled;
+        this.settings.muted = !this.enabled;
+        this.saveSettings();
+        this.updateAmbience();
+        if (!this.enabled) this.setStaticLock(false);
+        return this.enabled;
       }
 
       init() {
-        if (!this.ctx) {
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          this.ctx = new AudioCtx();
-          this.startAmbience();
-          this.probeOptionalAudio();
-        }
-        if (this.ctx.state === 'suspended') this.ctx.resume();
+        try {
+          if (!this.ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) {
+              this.ctx = new AC();
+              this.startSynthAmbience();
+            }
+            this.probeOptionalMp3();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+        } catch (e) {}
       }
 
-      probeOptionalAudio() {
-        const files = ['amb_train_loop', 'amb_platform_wind', 'sfx_shutter', 'sfx_horn', 'sfx_footstep'];
-        files.forEach(name => {
-          const a = new Audio(`./assets/audio/${name}.mp3`);
-          a.preload = 'auto';
-          if (name.startsWith('amb_')) a.loop = true;
-          a.addEventListener('canplaythrough', () => {
-            this.mp3Tracks[name] = a;
-            this.updateAmbienceLevels();
-          }, { once: true });
+      probeOptionalMp3() {
+        const names = ['bgm_title', 'amb_train_loop', 'amb_platform_wind', 'sfx_shutter', 'sfx_horn', 'sfx_static', 'sfx_footstep'];
+        names.forEach((n) => {
+          try {
+            const a = new Audio('./assets/audio/' + n + '.mp3');
+            a.preload = 'auto';
+            if (n.startsWith('bgm_') || n.startsWith('amb_') || n === 'sfx_static') a.loop = true;
+            a.addEventListener('canplaythrough', () => {
+              this.mp3[n] = a;
+              this.updateAmbience();
+            }, { once: true });
+          } catch (e) {}
         });
       }
 
-      playOptionalSfx(name) {
-        const track = this.mp3Tracks[name];
-        const vol = this.getSfxGain();
+      playMp3Sfx(name) {
+        const track = this.mp3[name];
+        const vol = this.getSfx();
         if (!track || vol <= 0) return false;
         try {
           const clone = track.cloneNode();
@@ -194,179 +1196,223 @@
         } catch (e) { return false; }
       }
 
-      toggle() {
-        this.enabled = !this.enabled;
-        this.settings.muted = !this.enabled;
-        this.saveSettings();
-        this.updateAmbienceLevels();
-        if (!this.enabled) this.setStaticLock(false);
-        return this.enabled;
+      setSceneMode(inTitle, onPlatform) {
+        this.inTitle = inTitle;
+        this.onPlatform = onPlatform;
+        this.updateAmbience();
       }
 
-      setPlatformAmbience(isPlatform) {
-        this.onPlatform = isPlatform;
-        this.updateAmbienceLevels();
-      }
+      updateAmbience() {
+        const amb = this.getAmb();
+        const titleTrack = this.mp3['bgm_title'];
+        const trainTrack = this.mp3['amb_train_loop'];
+        const windTrack = this.mp3['amb_platform_wind'];
 
-      updateAmbienceLevels() {
-        const amb = this.getAmbGain();
-        // Optional MP3 Ambience
-        const trainMp3 = this.mp3Tracks['amb_train_loop'];
-        const windMp3 = this.mp3Tracks['amb_platform_wind'];
-        const useTrainMp3 = Boolean(trainMp3);
-        const useWindMp3 = Boolean(windMp3);
-
-        if (trainMp3) {
-          const shouldPlay = amb > 0 && !this.onPlatform && (!game || game.chapter === 1);
-          trainMp3.volume = amb * 0.65;
-          if (shouldPlay && trainMp3.paused) trainMp3.play().catch(() => {});
-          else if (!shouldPlay && !trainMp3.paused) trainMp3.pause();
+        if (titleTrack) {
+          titleTrack.volume = amb * 0.6;
+          if (this.inTitle && amb > 0) { if (titleTrack.paused) titleTrack.play().catch(() => {}); }
+          else if (!titleTrack.paused) titleTrack.pause();
         }
-        if (windMp3) {
-          const shouldPlay = amb > 0 && this.onPlatform;
-          windMp3.volume = amb * 0.7;
-          if (shouldPlay && windMp3.paused) windMp3.play().catch(() => {});
-          else if (!shouldPlay && !windMp3.paused) windMp3.pause();
+        if (trainTrack) {
+          trainTrack.volume = amb * 0.65;
+          const playTrain = !this.inTitle && !this.onPlatform && amb > 0;
+          if (playTrain) { if (trainTrack.paused) trainTrack.play().catch(() => {}); }
+          else if (!trainTrack.paused) trainTrack.pause();
+        }
+        if (windTrack) {
+          windTrack.volume = amb * 0.7;
+          const playWind = !this.inTitle && this.onPlatform && amb > 0;
+          if (playWind) { if (windTrack.paused) windTrack.play().catch(() => {}); }
+          else if (!windTrack.paused) windTrack.pause();
         }
 
         if (!this.ctx) return;
         const t = this.ctx.currentTime;
-        if (this.droneGain) this.droneGain.gain.setTargetAtTime(!useTrainMp3 && !this.onPlatform ? 0.055 * amb : 0, t, 0.25);
-        if (this.windGain) this.windGain.gain.setTargetAtTime(!useWindMp3 && this.onPlatform ? 0.12 * amb : 0, t, 0.35);
+        if (this.droneGain) {
+          const useSynthTrain = !this.inTitle && !this.onPlatform && !trainTrack;
+          this.droneGain.gain.setTargetAtTime(useSynthTrain ? 0.05 * amb : 0, t, 0.25);
+        }
+        if (this.windGain) {
+          const useSynthWind = !this.inTitle && this.onPlatform && !windTrack;
+          this.windGain.gain.setTargetAtTime(useSynthWind ? 0.11 * amb : 0, t, 0.3);
+        }
       }
 
-      createNoiseBuffer(seconds = 2.0) {
-        const len = Math.floor(this.ctx.sampleRate * seconds);
+      createNoise(sec) {
+        const len = Math.floor(this.ctx.sampleRate * sec);
         const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
         const d = buf.getChannelData(0);
         for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
         return buf;
       }
 
-      startAmbience() {
-        const amb = this.getAmbGain();
+      startSynthAmbience() {
         const osc = this.ctx.createOscillator();
-        const filter = this.ctx.createBiquadFilter();
-        const gain = this.ctx.createGain();
-        osc.type = 'triangle'; osc.frequency.value = 43;
-        filter.type = 'lowpass'; filter.frequency.value = 100;
-        gain.gain.value = 0.055 * amb;
-        osc.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+        const lp = this.ctx.createBiquadFilter();
+        const g = this.ctx.createGain();
+        osc.type = 'triangle'; osc.frequency.value = 44;
+        lp.type = 'lowpass'; lp.frequency.value = 110;
+        g.gain.value = 0;
+        osc.connect(lp); lp.connect(g); g.connect(this.ctx.destination);
         osc.start();
-        this.droneGain = gain;
+        this.droneGain = g;
 
-        const windSrc = this.ctx.createBufferSource();
-        windSrc.buffer = this.createNoiseBuffer(3.0);
-        windSrc.loop = true;
-        const windBp = this.ctx.createBiquadFilter();
-        windBp.type = 'bandpass'; windBp.frequency.value = 340; windBp.Q.value = 2.5;
-        const wGain = this.ctx.createGain();
-        wGain.gain.value = 0;
-        windSrc.connect(windBp); windBp.connect(wGain); wGain.connect(this.ctx.destination);
-        windSrc.start();
-        this.windGain = wGain;
+        const wSrc = this.ctx.createBufferSource();
+        wSrc.buffer = this.createNoise(2.5);
+        wSrc.loop = true;
+        const wBp = this.ctx.createBiquadFilter();
+        wBp.type = 'bandpass'; wBp.frequency.value = 340; wBp.Q.value = 2.4;
+        const wG = this.ctx.createGain();
+        wG.gain.value = 0;
+        wSrc.connect(wBp); wBp.connect(wG); wG.connect(this.ctx.destination);
+        wSrc.start();
+        this.windGain = wG;
 
         let beat = 0;
         setInterval(() => {
-          if (!this.enabled || !this.ctx || this.ctx.state !== 'running' || this.onPlatform || this.mp3Tracks['amb_train_loop']) return;
+          if (!this.enabled || !this.ctx || this.ctx.state !== 'running' || this.inTitle || this.onPlatform || this.mp3['amb_train_loop']) return;
           if (game && game.chapter === 2) return;
           if (beat === 0 || beat === 1) this.playRailClack(beat === 0 ? 1.0 : 0.65);
           beat = (beat + 1) % 6;
-        }, 240);
+        }, 250);
       }
 
-      playRailClack(intensity = 1.0) {
-        const amb = this.getAmbGain();
-        if (amb <= 0) return;
-        try {
-          const now = this.ctx.currentTime;
-          const src = this.ctx.createBufferSource();
-          src.buffer = this.createNoiseBuffer(0.08);
-          const bp = this.ctx.createBiquadFilter();
-          bp.type = 'bandpass'; bp.frequency.value = 130 + Math.random() * 35;
-          const g = this.ctx.createGain();
-          g.gain.setValueAtTime(0.065 * intensity * amb, now);
-          g.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
-          src.connect(bp); bp.connect(g); g.connect(this.ctx.destination);
-          src.start(now);
-        } catch (e) {}
+      playRailClack(intensity) {
+        const amb = this.getAmb();
+        if (amb <= 0 || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const src = this.ctx.createBufferSource();
+        src.buffer = this.createNoise(0.07);
+        const bp = this.ctx.createBiquadFilter();
+        bp.type = 'bandpass'; bp.frequency.value = 135;
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0.06 * intensity * amb, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+        src.connect(bp); bp.connect(g); g.connect(this.ctx.destination);
+        src.start(now);
       }
 
       playFootstep() {
-        const sfx = this.getSfxGain();
+        if (this.playMp3Sfx('sfx_footstep')) return;
+        const sfx = this.getSfx();
         if (sfx <= 0 || !this.ctx) return;
-        if (this.playOptionalSfx('sfx_footstep')) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime((this.onPlatform ? 115 : 88) + Math.random() * 20, now);
-        osc.frequency.exponentialRampToValueAtTime(32, now + 0.065);
-        g.gain.setValueAtTime(0.11 * sfx, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.frequency.setValueAtTime((this.onPlatform ? 115 : 86) + Math.random() * 18, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.06);
+        g.gain.setValueAtTime(0.1 * sfx, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
         osc.connect(g); g.connect(this.ctx.destination);
-        osc.start(now); osc.stop(now + 0.075);
+        osc.start(now); osc.stop(now + 0.07);
       }
 
-      playVoiceBlip(speaker = 'Kiên') {
-        const sfx = this.getSfxGain();
+      playVoiceBlip(speaker) {
+        const sfx = this.getSfx();
         if (sfx <= 0 || !this.ctx) return;
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
-        let freq = 275;
-        if (speaker.includes('Nấm')) freq = 540;
-        else if (speaker.includes('Tùng')) freq = 185;
-        else if (speaker.includes('Cầm')) freq = 365;
-        else if (speaker.includes('Phong')) freq = 340;
+        let freq = 270;
+        if (speaker.includes('Nấm')) freq = 520;
+        else if (speaker.includes('Tùng')) freq = 180;
+        else if (speaker.includes('Cầm')) freq = 350;
+        else if (speaker.includes('Phong')) freq = 330;
         else if (speaker.includes('Soát Vé') || speaker.includes('Loa')) freq = 115;
         osc.type = (speaker.includes('Soát Vé') || speaker.includes('Loa')) ? 'sawtooth' : 'square';
-        osc.frequency.setValueAtTime(freq + Math.random() * 32, now);
-        g.gain.setValueAtTime(0.028 * sfx, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.028);
+        osc.frequency.setValueAtTime(freq + Math.random() * 25, now);
+        g.gain.setValueAtTime(0.024 * sfx, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
         osc.connect(g); g.connect(this.ctx.destination);
-        osc.start(now); osc.stop(now + 0.03);
+        osc.start(now); osc.stop(now + 0.028);
       }
 
       playShutter() {
-        const sfx = this.getSfxGain();
+        if (this.playMp3Sfx('sfx_shutter')) return;
+        const sfx = this.getSfx();
         if (sfx <= 0 || !this.ctx) return;
-        if (this.playOptionalSfx('sfx_shutter')) return;
         const now = this.ctx.currentTime;
         const src = this.ctx.createBufferSource();
-        src.buffer = this.createNoiseBuffer(0.11);
+        src.buffer = this.createNoise(0.1);
         const hp = this.ctx.createBiquadFilter();
         hp.type = 'highpass'; hp.frequency.value = 1100;
         const g = this.ctx.createGain();
-        g.gain.setValueAtTime(0.32 * sfx, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        g.gain.setValueAtTime(0.3 * sfx, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
         src.connect(hp); hp.connect(g); g.connect(this.ctx.destination);
         src.start(now);
+      }
 
-        const whine = this.ctx.createOscillator();
-        const wg = this.ctx.createGain();
-        whine.type = 'sine';
-        whine.frequency.setValueAtTime(680, now + 0.08);
-        whine.frequency.exponentialRampToValueAtTime(3400, now + 1.4);
-        wg.gain.setValueAtTime(0.001, now + 0.08);
-        wg.gain.linearRampToValueAtTime(0.036 * sfx, now + 0.35);
-        wg.gain.exponentialRampToValueAtTime(0.001, now + 1.45);
-        whine.connect(wg); wg.connect(this.ctx.destination);
-        whine.start(now + 0.08); whine.stop(now + 1.5);
+      playHorn() {
+        if (this.playMp3Sfx('sfx_horn')) return;
+        const sfx = this.getSfx();
+        if (sfx <= 0 || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        [108, 128, 152].forEach((f) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(f, now);
+          osc.frequency.linearRampToValueAtTime(f * 0.94, now + 2.0);
+          g.gain.setValueAtTime(0.001, now);
+          g.gain.linearRampToValueAtTime(0.055 * sfx, now + 0.3);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 2.1);
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.start(now); osc.stop(now + 2.2);
+        });
+      }
+
+      playHorrorSting() {
+        const sfx = this.getSfx();
+        if (sfx <= 0 || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        [520, 554, 110].forEach((f) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = f < 200 ? 'triangle' : 'sawtooth';
+          osc.frequency.setValueAtTime(f, now);
+          osc.frequency.exponentialRampToValueAtTime(f * 0.85, now + 0.8);
+          g.gain.setValueAtTime(0.001, now);
+          g.gain.linearRampToValueAtTime((f < 200 ? 0.2 : 0.05) * sfx, now + 0.03);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+          osc.connect(g); g.connect(this.ctx.destination);
+          osc.start(now); osc.stop(now + 0.9);
+        });
+      }
+
+      playClick(pitch) {
+        const sfx = this.getSfx();
+        if (sfx <= 0 || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(pitch || 540, now);
+        g.gain.setValueAtTime(0.08 * sfx, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(now); osc.stop(now + 0.045);
       }
 
       setStaticLock(active) {
+        const mp3Static = this.mp3['sfx_static'];
+        const sfx = this.getSfx();
+        if (mp3Static) {
+          mp3Static.volume = sfx * 0.5;
+          if (active && sfx > 0) { if (mp3Static.paused) mp3Static.play().catch(() => {}); }
+          else if (!mp3Static.paused) mp3Static.pause();
+          return;
+        }
         if (!this.ctx) return;
-        const sfx = this.getSfxGain();
         if (active && sfx > 0 && !this.isStaticPlaying) {
           this.isStaticPlaying = true;
           const src = this.ctx.createBufferSource();
-          src.buffer = this.createNoiseBuffer(2.0);
+          src.buffer = this.createNoise(1.5);
           src.loop = true;
           const bp = this.ctx.createBiquadFilter();
-          bp.type = 'bandpass'; bp.frequency.value = 2300; bp.Q.value = 1.6;
+          bp.type = 'bandpass'; bp.frequency.value = 2200; bp.Q.value = 1.6;
           const g = this.ctx.createGain();
-          g.gain.value = 0.055 * sfx;
+          g.gain.value = 0.045 * sfx;
           src.connect(bp); bp.connect(g); g.connect(this.ctx.destination);
           src.start();
           this.staticNode = src;
@@ -376,280 +1422,471 @@
           this.staticNode = null;
         }
       }
-
-      playTicketPunch() {
-        const sfx = this.getSfxGain();
-        if (sfx <= 0 || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(1600, now);
-        osc.frequency.exponentialRampToValueAtTime(200, now + 0.065);
-        g.gain.setValueAtTime(0.28 * sfx, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-        osc.connect(g); g.connect(this.ctx.destination);
-        osc.start(now); osc.stop(now + 0.075);
-      }
-
-      playTrainWhistle() {
-        const sfx = this.getSfxGain();
-        if (sfx <= 0 || !this.ctx) return;
-        if (this.playOptionalSfx('sfx_horn')) return;
-        const now = this.ctx.currentTime;
-        [106, 126, 152].forEach(f => {
-          const osc = this.ctx.createOscillator();
-          const lp = this.ctx.createBiquadFilter();
-          const g = this.ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(f, now);
-          osc.frequency.linearRampToValueAtTime(f * 0.94, now + 2.3);
-          lp.type = 'lowpass'; lp.frequency.value = 440;
-          g.gain.setValueAtTime(0.001, now);
-          g.gain.linearRampToValueAtTime(0.072 * sfx, now + 0.35);
-          g.gain.exponentialRampToValueAtTime(0.001, now + 2.4);
-          osc.connect(lp); lp.connect(g); g.connect(this.ctx.destination);
-          osc.start(now); osc.stop(now + 2.5);
-        });
-      }
-
-      playHorrorSwell() {
-        const sfx = this.getSfxGain();
-        if (sfx <= 0 || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        [62, 66, 185].forEach(f => {
-          const osc = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          osc.type = 'sawtooth'; osc.frequency.value = f;
-          g.gain.setValueAtTime(0.001, now);
-          g.gain.linearRampToValueAtTime(0.085 * sfx, now + 0.45);
-          g.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
-          osc.connect(g); g.connect(this.ctx.destination);
-          osc.start(now); osc.stop(now + 2.1);
-        });
-      }
-
-      playHorrorSting() {
-        const sfx = this.getSfxGain();
-        if (sfx <= 0 || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        [520, 554, 780, 110].forEach(f => {
-          const osc = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          osc.type = f < 200 ? 'triangle' : 'sawtooth';
-          osc.frequency.setValueAtTime(f, now);
-          osc.frequency.exponentialRampToValueAtTime(f * 0.86, now + 0.85);
-          g.gain.setValueAtTime(0.001, now);
-          g.gain.linearRampToValueAtTime((f < 200 ? 0.22 : 0.06) * sfx, now + 0.03);
-          g.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
-          osc.connect(g); g.connect(this.ctx.destination);
-          osc.start(now); osc.stop(now + 0.95);
-        });
-      }
-
-      playHeartbeat() {
-        const sfx = this.getSfxGain();
-        if (sfx <= 0 || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        [0, 0.22, 0.72, 0.94].forEach((offset, idx) => {
-          const osc = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(idx % 2 === 0 ? 64 : 52, now + offset);
-          osc.frequency.exponentialRampToValueAtTime(28, now + offset + 0.14);
-          g.gain.setValueAtTime(0.24 * sfx, now + offset);
-          g.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.16);
-          osc.connect(g); g.connect(this.ctx.destination);
-          osc.start(now + offset); osc.stop(now + offset + 0.18);
-        });
-      }
-
-      playBubbling() {
-        const sfx = this.getSfxGain();
-        if (sfx <= 0 || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        for (let i = 0; i < 6; i++) {
-          const t = now + i * 0.12;
-          const osc = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(160 + Math.random() * 140, t);
-          osc.frequency.exponentialRampToValueAtTime(480 + Math.random() * 160, t + 0.09);
-          g.gain.setValueAtTime(0.08 * sfx, t);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-          osc.connect(g); g.connect(this.ctx.destination);
-          osc.start(t); osc.stop(t + 0.11);
-        }
-      }
-
-      playClick(pitch = 540) {
-        const sfx = this.getSfxGain();
-        if (sfx <= 0 || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = 'sine'; osc.frequency.setValueAtTime(pitch, now);
-        g.gain.setValueAtTime(0.09 * sfx, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
-        osc.connect(g); g.connect(this.ctx.destination);
-        osc.start(now); osc.stop(now + 0.05);
-      }
     }
 
     const sound = new SoundEngine();
-// ... existing code ...
-      // --- CHAPTER 2 ---
+
+    /* =========================================================================
+       3. ITEM DATABASE & SCENE DEFINITIONS (CHAPTER 1 & CHAPTER 2)
+       ========================================================================= */
+    const ITEM_DB = {
+      broken_camera:  { id: 'broken_camera',  name: 'Máy Ảnh Kẹt Cò',   emoji: '📷', sheet: 'items_sheet',     col: 0, row: 0, cols: 4, rows: 2, desc: 'Máy ảnh phim cơ bị nứt ống kính, cò bấm kẹt cứng vì rỉ sét.' },
+      fixed_camera:   { id: 'fixed_camera',   name: 'Máy Ảnh Kính Nứt', emoji: '📸', sheet: 'items_sheet',     col: 0, row: 0, cols: 4, rows: 2, desc: 'Đã tra dầu! Nhấn [V] hoặc Chuột phải để ngắm qua lớp âm bản.' },
+      blank_ticket:   { id: 'blank_ticket',   name: 'Tấm Vé Trống',     emoji: '🎫', sheet: 'items_sheet',     col: 1, row: 0, cols: 4, rows: 2, desc: 'Tấm vé rách mép không ghi tên ga đến.' },
+      stamped_ticket: { id: 'stamped_ticket', name: 'Vé Ga Đá Trắng',   emoji: '🎟', sheet: 'items_sheet',     col: 1, row: 0, cols: 4, rows: 2, desc: 'Đã đóng dấu "GA ĐÁ TRẮNG — 02:14" bằng thứ mực đen đặc.' },
+      broken_watch:   { id: 'broken_watch',   name: 'Đồng Hồ Hỏng',     emoji: '⏱', sheet: 'items_sheet',     col: 2, row: 0, cols: 4, rows: 2, desc: 'Đồng hồ quả quýt bị gãy lò xo dây cót.' },
+      working_watch:  { id: 'working_watch',  name: 'Đồng Hồ Đã Sửa',   emoji: '⌚', sheet: 'items_sheet',     col: 2, row: 0, cols: 4, rows: 2, desc: 'Chạy tích tắc đều đặn. Có thể đổi lấy dầu máy ở Toa 3.' },
+      hairpin:        { id: 'hairpin',        name: 'Kẹp Tóc Thép',     emoji: '📎', sheet: 'items_sheet',     col: 3, row: 0, cols: 4, rows: 2, desc: 'Thanh thép đàn hồi, ghép được với Đồng Hồ Hỏng.' },
+      oil_bottle:     { id: 'oil_bottle',     name: 'Lọ Dầu Máy',       emoji: '🛢', sheet: 'items_sheet',     col: 0, row: 1, cols: 4, rows: 2, desc: 'Dầu bôi trơn của Bác Tùng. Ghép với Máy Ảnh Kẹt Cò để sửa.' },
+      dry_stamp:      { id: 'dry_stamp',      name: 'Con Dấu Khô Mực',  emoji: '🪵', sheet: 'items_sheet',     col: 1, row: 1, cols: 4, rows: 2, desc: 'Con dấu gỗ khắc chữ "GA ĐÁ TRẮNG" nhưng đã khô mực.' },
+      inked_stamp:    { id: 'inked_stamp',    name: 'Con Dấu Có Mực',   emoji: '🖋', sheet: 'items_sheet',     col: 1, row: 1, cols: 4, rows: 2, desc: 'Đã thấm mực đen từ Toa 3. Ghép với Tấm Vé Trống.' },
+      photo_hands:    { id: 'photo_hands',    name: 'Ảnh Polaroid #1',  emoji: '🖼', sheet: 'items_sheet',     col: 2, row: 1, cols: 4, rows: 2, desc: 'Click để xem lại: Hàng chục bàn tay xám chỉ vào mã số 2-1-4.', polaroidCode: '2 - 1 - 4', polaroidCaption: 'Dưới sàn Toa Hành Lý hiện rõ 3 chữ số: 2 - 1 - 4.' },
+      // Chapter 2
+      fuse:           { id: 'fuse',           name: 'Cầu Chì Thủy Tinh',emoji: '💡', sheet: 'items_ch2_sheet', col: 2, row: 1, cols: 3, rows: 2, desc: 'Cầu chì dự phòng từ Bà Cầm. Lắp vào Hộp Cầu Chì ở Toa 4.' },
+      film_strip:     { id: 'film_strip',     name: 'Dải Phim Âm Bản',  emoji: '🎞', sheet: 'items_ch2_sheet', col: 0, row: 1, cols: 3, rows: 2, desc: 'Cuộn phim chưa tráng. Mang vào Phòng Tối (rèm đỏ) ở Toa 5.' },
+      vip_key:        { id: 'vip_key',        name: 'Chìa Khóa VIP',    emoji: '🔑', sheet: 'items_ch2_sheet', col: 1, row: 1, cols: 3, rows: 2, desc: 'Chìa khóa đồng mở cửa Khoang VIP (Toa 6).' },
+      ledger:         { id: 'ledger',         name: 'Sổ Nợ Đẫm Máu',    emoji: '📕', sheet: 'items_ch2_sheet', col: 1, row: 0, cols: 3, rows: 2, desc: 'Cuốn sổ Phong làm rơi khi bỏ chạy.' },
+      child_watch:    { id: 'child_watch',    name: 'Đồng Hồ Trẻ Em',   emoji: '⌚', sheet: 'items_ch2_sheet', col: 2, row: 0, cols: 3, rows: 2, desc: 'Chiếc đồng hồ trẻ em vỡ mặt kính, dừng ở 02:14.' }
+    };
+
+    const SCENES = {
+      car_luggage: {
+        id: 'car_luggage', name: 'Toa 1: Toa Hành Lý', bgKey: 'bg_car_luggage', negKey: 'bg_car_luggage_neg', floorY: 585,
+        anomalies: [
+          { id: 'anom_hands', x: 580, y: 410, radius: 155, flag: 'capturedHands', photoId: 'photo_hands', toast: 'TÁCH! Ảnh Polaroid ghi lại mã số 2 - 1 - 4!' }
+        ],
+        hotspots: [
+          { id: 'crow_chest',   x: 290,  y: 515, w: 120, label: 'Rương Quạ Sắt' },
+          { id: 'crates_pile',  x: 580,  y: 440, w: 170, label: 'Đống Thùng & Vali' },
+          { id: 'tool_cabinet', x: 1030, y: 455, w: 120, label: 'Tủ Dụng Cụ' },
+          { id: 'exit_to_car2', x: 1215, y: 430, w: 90,  label: 'Sang Toa 2 ▸', isExit: true }
+        ]
+      },
+      car_coach: {
+        id: 'car_coach', name: 'Toa 2: Toa Ghế Cứng', bgKey: 'bg_car_coach', negKey: 'bg_car_coach_neg', floorY: 585,
+        anomalies: [
+          { id: 'anom_clock', x: 830, y: 230, radius: 130, flag: 'sawClockHint', photoId: null, toast: 'TÁCH! Dòng chữ cào hiện rõ quanh đồng hồ 02:14!' }
+        ],
+        hotspots: [
+          { id: 'exit_to_car1', x: 65,   y: 430, w: 90,  label: '◂ Sang Toa 1', isExit: true },
+          { id: 'seat_14',      x: 245,  y: 465, w: 110, label: 'Ghế Số 14' },
+          { id: 'clock_0214',   x: 830,  y: 230, w: 110, label: 'Đồng Hồ 02:14' },
+          { id: 'npc_benam',    x: 920,  y: 470, w: 105, label: 'Bé Nấm' },
+          { id: 'npc_soatve',   x: 1110, y: 460, w: 110, label: 'Người Soát Vé', visible: () => game.flags.inspectorSpawned },
+          { id: 'exit_to_car3', x: 1215, y: 430, w: 90,  label: 'Sang Toa 3 ▸', isExit: true }
+        ]
+      },
+      car_dining: {
+        id: 'car_dining', name: 'Toa 3: Toa Nhà Ăn', bgKey: 'bg_car_dining', negKey: 'bg_car_dining_neg', floorY: 585,
+        anomalies: [
+          { id: 'anom_soup', x: 925, y: 420, radius: 130, flag: 'inspectedSoupNegative', photoId: null, toast: 'TÁCH! Nồi súp biến thành chất lỏng mực đen đặc!' }
+        ],
+        hotspots: [
+          { id: 'exit_to_car2_from_3', x: 65,   y: 430, w: 90,  label: '◂ Sang Toa 2', isExit: true },
+          { id: 'dining_tables',       x: 420,  y: 470, w: 160, label: 'Bàn Ăn Cũ' },
+          { id: 'npc_bactung',         x: 760,  y: 465, w: 115, label: 'Bác Bếp Tùng' },
+          { id: 'soup_pot',            x: 925,  y: 435, w: 110, label: 'Nồi Súp Hành Tây' },
+          { id: 'door_car4',           x: 1215, y: 430, w: 90,  label: () => game.flags.ch1Complete ? 'Sang Toa 4 ▸' : 'Cửa Toa 4 [KHÓA]', isExit: true }
+        ]
+      },
+      // CHAPTER 2
       car_sleeper: {
         id: 'car_sleeper', name: 'Toa 4: Toa Giường Nằm', bgKey: 'bg_car_sleeper', negKey: 'bg_car_sleeper_neg', floorY: 585,
-        anomalies: [{ id: 'anom_sleeper', x: 640, y: 390, radius: 135, flag: 'ch2Saw0412', photoId: null, toast: 'TÁCH! Nốt nhạc ma quái & dãy số 04-12 hiện rõ trên cửa 4B!' }],
+        anomalies: [
+          { id: 'anom_sleeper', x: 640, y: 390, radius: 140, flag: 'ch2Saw0412', photoId: null, toast: 'TÁCH! Dãy số 04-12 & nốt nhạc ma quái hiện rõ trên cửa 4B!' }
+        ],
         hotspots: [
-          { id: 'fuse_box',     x: 420,  y: 380, w: 115, label: 'Hộp Cầu Chì', visible: () => true },
-          { id: 'door_4b',      x: 645,  y: 420, w: 120, label: 'Khoang 4B', visible: () => true },
-          { id: 'npc_bacam',    x: 810,  y: 465, w: 115, label: 'Bà Cầm', visible: () => true },
-          { id: 'exit_to_car5', x: 1215, y: 430, w: 100, label: () => game.flags.ch2FuseFixed ? 'Sang Toa 5 ▸' : 'Cửa Toa 5 [MẤT ĐIỆN]', isExit: true, visible: () => true }
+          { id: 'fuse_box',     x: 420,  y: 380, w: 115, label: 'Hộp Cầu Chì' },
+          { id: 'door_4b',      x: 645,  y: 420, w: 120, label: 'Khoang 4B' },
+          { id: 'npc_bacam',    x: 820,  y: 465, w: 115, label: 'Bà Cầm' },
+          { id: 'exit_to_car5', x: 1215, y: 430, w: 95,  label: () => game.flags.ch2FuseFixed ? 'Sang Toa 5 ▸' : 'Cửa Toa 5 [MẤT ĐIỆN]', isExit: true }
         ]
       },
       car_mail: {
         id: 'car_mail', name: 'Toa 5: Toa Bưu Chính', bgKey: 'bg_car_mail', negKey: 'bg_car_mail_neg', floorY: 585,
         anomalies: [
-          { id: 'anom_mail', x: 930, y: 330, radius: 125, flag: 'ch2SawMailBoard', photoId: null, toast: 'TÁCH! Những sợi chỉ đỏ nối tới khuôn mặt bóng đen trên bảng chứng cứ...' },
-          { id: 'anom_mail_curtain', x: 1145, y: 390, radius: 115, flag: 'reacted_mail_ghost', photoId: null, toast: 'TÁCH! Đôi mắt trắng sau tấm rèm đỏ vụt tắt trong bóng tối!' }
+          { id: 'anom_mail', x: 930, y: 330, radius: 130, flag: 'ch2SawMailBoard', photoId: null, toast: 'TÁCH! Những sợi chỉ đỏ nối tới khuôn mặt bóng đen...' }
         ],
         hotspots: [
-          { id: 'exit_to_car4_from_5', x: 65,   y: 430, w: 95,  label: '◂ Sang Toa 4', isExit: true, visible: () => true },
-          { id: 'morse_desk',          x: 455,  y: 450, w: 150, label: 'Bàn Điện Báo', visible: () => true },
-          { id: 'evidence_board',      x: 925,  y: 350, w: 170, label: 'Bảng Chứng Cứ', visible: () => true },
-          { id: 'darkroom_curtain',    x: 1135, y: 430, w: 110, label: 'Phòng Tối Tráng Phim', visible: () => true },
-          { id: 'exit_to_car6',        x: 1235, y: 430, w: 80,  label: () => game.flags.ch2VipUnlocked ? 'Sang Toa 6 VIP ▸' : 'Cửa Khoang VIP [KHÓA]', isExit: true, visible: () => true }
+          { id: 'exit_to_car4_from_5', x: 65,   y: 430, w: 95,  label: '◂ Sang Toa 4', isExit: true },
+          { id: 'morse_desk',          x: 455,  y: 450, w: 150, label: 'Bàn Điện Báo' },
+          { id: 'evidence_board',      x: 925,  y: 350, w: 165, label: 'Bảng Chứng Cứ' },
+          { id: 'darkroom_curtain',    x: 1130, y: 430, w: 105, label: 'Phòng Tối Tráng Phim' },
+          { id: 'exit_to_car6',        x: 1230, y: 430, w: 80,  label: () => game.flags.ch2VipUnlocked ? 'Sang Toa 6 VIP ▸' : 'Cửa VIP [KHÓA]', isExit: true }
         ]
       },
       car_vip: {
         id: 'car_vip', name: 'Toa 6: Toa Khoang VIP', bgKey: 'bg_car_vip', negKey: 'bg_car_vip_neg', floorY: 590,
-        anomalies: [{ id: 'anom_vip', x: 640, y: 420, radius: 175, flag: 'ch2CapturedVip', photoId: 'photo_02_vip', toast: 'TÁCH! Ngọn lửa 5 năm trước bùng lên từ chiếc vali da của Phong!' }],
+        anomalies: [
+          { id: 'anom_vip', x: 640, y: 410, radius: 175, flag: 'ch2CapturedVip', photoId: null, toast: 'TÁCH! Ngọn lửa 5 năm trước bùng lên từ chiếc vali của Phong!' }
+        ],
         hotspots: [
-// ... existing code ...
+          { id: 'exit_to_car5_from_6', x: 65,   y: 430, w: 95,  label: '◂ Sang Toa 5', isExit: true },
+          { id: 'vip_briefcase',       x: 525,  y: 500, w: 120, label: 'Vali Da Khóa Số' },
+          { id: 'npc_phong_vip',       x: 840,  y: 470, w: 120, label: 'Phong', visible: () => !game.flags.ch2PhongFled },
+          { id: 'exit_to_platform',    x: 1215, y: 430, w: 95,  label: 'Ra Sân Ga Sương Mù ▸', isExit: true, visible: () => game.flags.ch2PhongFled }
+        ]
+      },
+      platform_zero: {
+        id: 'platform_zero', name: 'Sân Ga Số Không (Ga Đá Trắng)', bgKey: 'bg_platform_zero', negKey: 'bg_platform_zero', floorY: 600,
+        anomalies: [
+          { id: 'anom_platform_phong', x: 890, y: 430, radius: 150, flag: 'ch2BanishedPhong', photoId: null, toast: 'TÁCH! Ánh flash phơi bày quá khứ của Phong giữa màn sương!' }
+        ],
+        hotspots: [
+          { id: 'station_sign',       x: 980, y: 260, w: 160, label: 'Biển Ga Đá Trắng' },
+          { id: 'npc_phong_platform', x: 890, y: 485, w: 120, label: 'Phong' }
+        ]
+      }
+    };
+
+    /* =========================================================================
+       4. GAME STATE
+       ========================================================================= */
+    let game = null;
+
+    function createInitialState(startCh) {
+      const isCh2 = startCh === 2;
+      return {
+        started: false,
+        ended: false,
+        chapter: startCh,
+        sceneId: isCh2 ? 'car_sleeper' : 'car_coach',
+        player: { x: isCh2 ? 170 : 280, dir: 1, walkFrame: 0, walkTimer: 0, stepTimer: 0 },
+        keys: { left: false, right: false },
+        mouse: { x: 640, y: 360 },
+        lens: { unlocked: isCh2, active: false, x: 640, y: 360, cooldown: 0, flashAlpha: 0, lockedAnomaly: null },
+        inventory: isCh2 ? ['fixed_camera', 'stamped_ticket'] : ['broken_camera', 'blank_ticket'],
+        selectedItem: null,
+        invOpen: false,
+        activeHotspot: null,
+        dialogue: { active: false, queue: [], idx: 0, charIdx: 0, timer: 0, onDone: null },
+        fade: { alpha: 0, dir: 0, callback: null },
+        shakeTimer: 0,
+        flickerTimer: 0,
+        padlockDigits: [0, 0, 0],
         flags: {
-          // Ch1
           metBeNam: isCh2, metChef: isCh2, pickedHairpin: isCh2, pickedBrokenWatch: isCh2,
           gaveWatch: isCh2, fixedCamera: isCh2, sawClockHint: isCh2, capturedHands: isCh2,
           openedChest: isCh2, inspectedSoupNegative: isCh2, inkedStamp: isCh2,
           stampedTicket: isCh2, inspectorSpawned: isCh2, ch1Complete: isCh2,
           // First-Sight Horror Reactions
           seenCameraFirstOpen: isCh2,
-          reacted_clock_ghost: isCh2,
-          reacted_hands_ghost: isCh2,
-          reacted_soup_ghost: isCh2,
-          reacted_sleeper_ghost: false,
-          reacted_mail_ghost: false,
-          reacted_vip_ghost: false,
-          // Ch2
+          reacted_clock: isCh2, reacted_hands: isCh2, reacted_soup: isCh2,
+          reacted_sleeper: false, reacted_vip: false,
+          // Chapter 2
           ch2MetBaCam: false, ch2Saw0412: false, ch2GotFuse: false, ch2FuseFixed: false,
           ch2GotFilm: false, ch2SawMailBoard: false, ch2DevelopedFilm: false, ch2VipUnlocked: false,
           ch2MetPhong: false, ch2CapturedVip: false, ch2PhongFled: false, ch2BanishedPhong: false
-        },
-        padlockDigits: [0, 0, 0]
+        }
       };
     }
-// ... existing code ...
-    function tryCombine(idA, idB) {
-      const pair = [idA, idB].sort().join('+');
+
+    /* =========================================================================
+       5. UI HELPERS (TOASTS, MODALS, DIALOGUE, INVENTORY)
+       ========================================================================= */
+    function showToast(msg, isHorror) {
+      const wrap = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = 'toast' + (isHorror ? ' horror' : '');
+      el.textContent = msg;
+      wrap.appendChild(el);
+      setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 250); }, 3400);
+    }
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('visible');
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('visible');
+    }
+
+    function updateHUD() {
+      if (!game) return;
+      const sc = SCENES[game.sceneId];
+      document.getElementById('hud-scene-name').textContent = sc.name;
+      const camBtn = document.getElementById('hud-cam-btn');
+      const camLbl = document.getElementById('hud-cam-label');
+      if (game.lens.unlocked) {
+        camLbl.textContent = game.lens.active ? 'Kính Nứt [BẬT]' : 'Kính Nứt [V]';
+        camBtn.classList.toggle('active', game.lens.active);
+      } else {
+        camLbl.textContent = 'Máy ảnh [Kẹt cò]';
+        camBtn.classList.remove('active');
+      }
+      document.getElementById('hud-ticket-label').textContent = game.flags.stampedTicket ? 'Vé Ga Đá Trắng' : 'Vé trống';
+    }
+
+    function drawPortrait(speaker) {
+      const pCanvas = document.getElementById('dialogue-portrait');
+      const pctx = pCanvas.getContext('2d');
+      pctx.fillStyle = '#121516';
+      pctx.fillRect(0, 0, 100, 100);
+      let key = 'portrait_kien';
+      if (speaker.includes('Nấm')) key = 'portrait_benam';
+      else if (speaker.includes('Tùng')) key = 'portrait_bactung';
+      else if (speaker.includes('Soát Vé')) key = 'portrait_soatve';
+      else if (speaker.includes('Cầm')) key = 'portrait_bacam';
+      else if (speaker.includes('Phong')) key = 'portrait_phong';
+
+      const img = ASSETS[key];
+      if (img) {
+        pctx.drawImage(img, 0, 0, 100, 100);
+      } else {
+        // Hand-drawn fallback portrait
+        pctx.fillStyle = '#252a2c';
+        pctx.beginPath(); pctx.arc(50, 44, 24, 0, Math.PI * 2); pctx.fill();
+        pctx.fillStyle = '#dfc374';
+        pctx.font = 'bold 26px sans-serif';
+        pctx.textAlign = 'center';
+        pctx.fillText(speaker.charAt(0).toUpperCase(), 50, 53);
+      }
+    }
+
+    function startDialogue(lines, onDone) {
+      if (!lines || !lines.length) return;
+      toggleInventory(false);
+      game.dialogue.active = true;
+      game.dialogue.queue = lines;
+      game.dialogue.idx = 0;
+      game.dialogue.charIdx = 0;
+      game.dialogue.timer = 0;
+      game.dialogue.onDone = onDone || null;
+      document.getElementById('dialogue-box').style.display = 'flex';
+      renderDialogueLine();
+    }
+
+    function renderDialogueLine() {
+      const cur = game.dialogue.queue[game.dialogue.idx];
+      if (!cur) return;
+      document.getElementById('dialogue-speaker').textContent = cur.speaker;
+      document.getElementById('dialogue-text').textContent = cur.text.slice(0, game.dialogue.charIdx);
+      drawPortrait(cur.speaker);
+    }
+
+    function advanceDialogue() {
+      if (!game.dialogue.active) return;
+      const cur = game.dialogue.queue[game.dialogue.idx];
+      if (game.dialogue.charIdx < cur.text.length) {
+        game.dialogue.charIdx = cur.text.length;
+        renderDialogueLine();
+        return;
+      }
+      game.dialogue.idx++;
+      if (game.dialogue.idx >= game.dialogue.queue.length) {
+        game.dialogue.active = false;
+        document.getElementById('dialogue-box').style.display = 'none';
+        const cb = game.dialogue.onDone;
+        game.dialogue.onDone = null;
+        if (cb) cb();
+      } else {
+        game.dialogue.charIdx = 0;
+        renderDialogueLine();
+      }
+    }
+
+    /* Inventory */
+    function hasItem(id) { return game.inventory.includes(id); }
+    function addItem(id) { if (!hasItem(id)) game.inventory.push(id); renderInventory(); }
+    function removeItem(id) {
+      game.inventory = game.inventory.filter(x => x !== id);
+      if (game.selectedItem === id) game.selectedItem = null;
+      renderInventory();
+    }
+
+    function toggleInventory(force) {
+      if (!game || !game.started || game.dialogue.active) return;
+      game.invOpen = typeof force === 'boolean' ? force : !game.invOpen;
+      document.getElementById('inventory-drawer').style.display = game.invOpen ? 'flex' : 'none';
+      if (game.invOpen) renderInventory();
+    }
+
+    function renderInventory() {
+      if (!game) return;
+      const grid = document.getElementById('inv-grid');
+      grid.innerHTML = '';
+      game.inventory.forEach((id) => {
+        const item = ITEM_DB[id];
+        if (!item) return;
+        const slot = document.createElement('div');
+        slot.className = 'inv-slot' + (game.selectedItem === id ? ' selected' : '');
+        const ic = document.createElement('canvas');
+        ic.width = 48; ic.height = 48;
+        const ictx = ic.getContext('2d');
+        const sheet = ASSETS[item.sheet];
+        if (sheet) {
+          const sw = (sheet.naturalWidth || sheet.width) / item.cols;
+          const sh = (sheet.naturalHeight || sheet.height) / item.rows;
+          ictx.drawImage(sheet, item.col * sw, item.row * sh, sw, sh, 2, 2, 44, 44);
+        } else {
+          ictx.font = '28px sans-serif';
+          ictx.textAlign = 'center';
+          ictx.fillText(item.emoji, 24, 34);
+        }
+        const lbl = document.createElement('div');
+        lbl.className = 'inv-slot-name';
+        lbl.textContent = item.name;
+        slot.appendChild(ic);
+        slot.appendChild(lbl);
+        slot.onclick = () => onInventoryClick(id);
+        grid.appendChild(slot);
+      });
+      const sel = game.selectedItem ? ITEM_DB[game.selectedItem] : null;
+      document.getElementById('inv-desc').textContent = sel ? (sel.name + ': ' + sel.desc) : 'Chọn 1 vật phẩm để xem mô tả, hoặc chọn thêm món thứ 2 để ghép.';
+    }
+
+    function onInventoryClick(id) {
+      sound.playClick(520);
+      const item = ITEM_DB[id];
+      if (item.polaroidCode) {
+        document.getElementById('polaroid-img-box').textContent = item.polaroidCode;
+        document.getElementById('polaroid-caption').textContent = item.polaroidCaption;
+        openModal('polaroid-modal');
+        return;
+      }
+      if (!game.selectedItem) {
+        game.selectedItem = id;
+        renderInventory();
+        return;
+      }
+      if (game.selectedItem === id) {
+        game.selectedItem = null;
+        renderInventory();
+        return;
+      }
+      const first = game.selectedItem;
+      game.selectedItem = null;
+      tryCombine(first, id);
+      renderInventory();
+    }
+
+    function tryCombine(a, b) {
+      const pair = [a, b].sort().join('+');
       if (pair === 'broken_watch+hairpin') {
         removeItem('broken_watch'); removeItem('hairpin'); addItem('working_watch');
         showToast('Ghép thành công -> Nhận [Đồng Hồ Đã Sửa]!');
-        startDialogue([{ speaker: 'Kiên', text: 'Tích... tắc... May quá, thanh thép của kẹp tóc vừa khít thay dây cót. Đem sang Toa 3 đưa cho bác đầu bếp thôi.' }]);
-        return true;
-      }
-      if (pair === 'broken_camera+oil_bottle') {
+        startDialogue([{ speaker: 'Kiên', text: 'Tích... tắc... May quá, thanh thép kẹp tóc vừa khít thay dây cót. Đem sang Toa 3 đưa cho Bác Tùng thôi.' }]);
+      } else if (pair === 'broken_camera+oil_bottle') {
         removeItem('broken_camera'); removeItem('oil_bottle'); addItem('fixed_camera');
         game.flags.fixedCamera = true; game.lens.unlocked = true;
         updateHUD(); sound.playShutter();
-        showToast('ĐÃ SỬA MÁY ẢNH! Nhấn [V] hoặc Chuột phải để ngắm qua ống kính!', true);
+        showToast('ĐÃ SỬA MÁY ẢNH! Nhấn [V] hoặc Chuột phải để bật Kính Nứt!', true);
         startDialogue([
           { speaker: 'Kiên', text: 'Phù... cuối cùng cái cò bấm rỉ sét này cũng chịu nhả ra rồi.' },
-          { speaker: 'Kiên', text: 'Ống kính nứt một đường chéo rõ sâu... Để bấm [V] hoặc Chuột phải giơ lên ngắm thử xem còn nhìn rõ gì không.' }
+          { speaker: 'Kiên', text: 'Ống kính nứt một đường chéo rõ sâu... Để bấm [V] hoặc Chuột phải giơ lên ngắm thử xem có gì lạ không.' }
         ]);
-        return true;
-      }
-      if (pair === 'blank_ticket+inked_stamp') {
+      } else if (pair === 'blank_ticket+inked_stamp') {
         removeItem('blank_ticket'); removeItem('inked_stamp'); addItem('stamped_ticket');
         game.flags.stampedTicket = true;
-        updateHUD(); drawHudIcons(); sound.playTicketPunch();
+        updateHUD(); sound.playClick(740);
         showToast('ĐÃ ĐÓNG DẤU VÉ -> Nhận [Vé Ga Đá Trắng (02:14)]!');
         startDialogue([
-          { speaker: 'Kiên', text: '"GA ĐÁ TRẮNG — 02:14"... Thứ mực đen quái dị này thấm sâu vào giấy như vết máu khô vậy.' },
-          { speaker: 'Kiên', text: 'Không hiểu sao cái tên "Đá Trắng" lại khiến tim mình nhói lên... Thôi, quay về Toa 2 xem sao đã.' }
-        ]);
-        return true;
-      }
-      sound.playClick(180);
-      showToast('Hai thứ này chẳng ăn nhập gì với nhau cả.');
-      return false;
-    }
-// ... existing code ...
-    function finishDarkroomHold() {
-      if (!darkroom.active || !darkroom.holding) return;
-      darkroom.holding = false;
-      if (darkroom.value >= 64 && darkroom.value <= 84) {
-        sound.playTicketPunch();
-        closeDarkroom();
-        removeItem('film_strip');
-        addItem('vip_key');
-        game.flags.ch2DevelopedFilm = true;
-        showToast('TRÁNG PHIM THÀNH CÔNG! Tìm thấy [Chìa Khóa VIP] dưới đáy khay!', true);
-        startDialogue([
-          { speaker: 'Kiên', text: 'Trời ơi... Bức ảnh vừa hiện lên kìa. Một toa tàu đang bốc cháy ngùn ngụt, còn bên ngoài có kẻ mặc vest đang chốt chặt tay nắm cửa...' },
-          { speaker: 'Kiên', text: 'Chờ đã, dưới đáy khay thuốc còn chìm một chiếc [Chìa Khóa VIP] bằng đồng. Chắc chắn mở được cửa Toa 6. Phải sang đối chất với gã Phong ngay!' }
+          { speaker: 'Kiên', text: '"GA ĐÁ TRẮNG — 02:14"... Thứ mực đen quái dị này thấm sâu vào giấy như vết máu khô.' },
+          { speaker: 'Kiên', text: 'Quay về Toa 2 xem Người Soát Vé có xuất hiện không.' }
         ]);
       } else {
-        sound.playClick(160);
-        showToast(darkroom.value < 64 ? 'Phim còn mờ quá! Ngâm thêm chút nữa rồi thả trong vùng vàng.' : 'Cháy phim mất rồi! Thử nhúng lại và thả đúng vùng vàng.', true);
-        darkroom.value = 0;
-        document.getElementById('darkroom-fill').style.width = '0%';
-        document.getElementById('darkroom-film-preview').textContent = 'THỬ LẠI...';
+        sound.playClick(180);
+        showToast('Hai vật phẩm này không thể ghép với nhau.');
       }
     }
-// ... existing code ...
+
+    /* =========================================================================
+       6. PADLOCK (214) & DARKROOM MINIGAME (64% - 84%)
+       ========================================================================= */
+    function openPadlock() {
+      for (let i = 0; i < 3; i++) document.getElementById('pad-d' + i).textContent = game.padlockDigits[i];
+      openModal('padlock-modal');
+    }
+
+    function stepPadlock(idx, delta) {
+      sound.playClick(460);
+      game.padlockDigits[idx] = (game.padlockDigits[idx] + delta + 10) % 10;
+      document.getElementById('pad-d' + idx).textContent = game.padlockDigits[idx];
+    }
+
     function checkPadlock() {
       if (game.padlockDigits.join('') === '214') {
         closeModal('padlock-modal');
         game.flags.openedChest = true;
         addItem('dry_stamp');
-        sound.playTicketPunch();
+        sound.playClick(820);
         showToast('CẠCH! Rương Quạ Sắt đã mở -> Nhận [Con Dấu Khô Mực]!');
         startDialogue([
-          { speaker: 'Kiên', text: 'Mở được rồi! Bên trong chỉ có đúng một con dấu gỗ cũ khắc chữ "GA ĐÁ TRẮNG"...' },
-          { speaker: 'Kiên', text: 'Mặt cao su khô cong rồi, đóng lên vé chẳng ra nét nào đâu. Mình phải sang Toa 3 tìm thứ gì đó đặc như mực để chấm mới được.' }
+          { speaker: 'Kiên', text: 'Mở được rồi! Bên trong chỉ có một con dấu gỗ cũ khắc chữ "GA ĐÁ TRẮNG"...' },
+          { speaker: 'Kiên', text: 'Mặt cao su khô cong rồi. Phải sang Toa 3 tìm thứ gì đó đặc như mực để chấm mới đóng lên vé được.' }
         ]);
       } else {
         sound.playClick(160);
-        const card = document.getElementById('padlock-card');
-        card.classList.remove('shake-err'); void card.offsetWidth; card.classList.add('shake-err');
-        showToast('Ổ khóa không nhúc nhích. Thử dùng Kính Nứt [V] soi đống thùng gỗ ở Toa 1 tìm 3 chữ số.', true);
+        showToast('Sai mật mã! Dùng Kính Nứt [V] soi & chụp đống thùng gỗ ở Toa 1 để lấy 3 chữ số.', true);
+      }
+    }
+
+    const darkroom = { active: false, holding: false, value: 0 };
+    function openDarkroom() {
+      if (game.flags.ch2DevelopedFilm) {
+        startDialogue([{ speaker: 'Kiên', text: 'Mình đã tráng xong dải phim và lấy được Chìa Khóa VIP rồi.' }]);
+        return;
+      }
+      if (!hasItem('film_strip')) {
+        startDialogue([{ speaker: 'Kiên', text: 'Phòng tối có đủ khay thuốc tráng phim, nhưng mình chưa có cuộn phim nào. Thử tìm trên Bàn Điện Báo ở Toa 5 xem.' }]);
+        return;
+      }
+      darkroom.active = true; darkroom.holding = false; darkroom.value = 0;
+      document.getElementById('darkroom-fill').style.width = '0%';
+      document.getElementById('darkroom-status').textContent = 'SẴN SÀNG... 0%';
+      openModal('darkroom-modal');
+    }
+
+    function closeDarkroom() {
+      darkroom.active = false; darkroom.holding = false;
+      closeModal('darkroom-modal');
+    }
+
+    function finishDarkroomHold() {
+      if (!darkroom.active || !darkroom.holding) return;
+      darkroom.holding = false;
+      if (darkroom.value >= 64 && darkroom.value <= 84) {
+        sound.playClick(820);
+        closeDarkroom();
+        removeItem('film_strip');
+        addItem('vip_key');
+        game.flags.ch2DevelopedFilm = true;
+        showToast('TRÁNG PHIM THÀNH CÔNG! Nhận [Chìa Khóa VIP]!', true);
+        startDialogue([
+          { speaker: 'Kiên', text: 'Trời ơi... Bức ảnh hiện lên một toa tàu đang bốc cháy, còn bên ngoài có kẻ mặc vest chốt chặt tay nắm cửa...' },
+          { speaker: 'Kiên', text: 'Dưới đáy khay thuốc còn có một chiếc [Chìa Khóa VIP]. Mở cửa sang Toa 6 đối chất với Phong ngay!' }
+        ]);
+      } else {
+        sound.playClick(160);
+        showToast(darkroom.value < 64 ? 'Phim còn mờ! Ngâm lâu hơn một chút rồi thả trong vùng vàng.' : 'Cháy phim rồi! Thử lại và thả đúng vùng 64%-84%.', true);
+        darkroom.value = 0;
+        document.getElementById('darkroom-fill').style.width = '0%';
+        document.getElementById('darkroom-status').textContent = 'THỬ LẠI... 0%';
       }
     }
 
     /* =========================================================================
-       11. SCENE TRANSITIONS & CHAPTER 1 + CHAPTER 2 INTERACTIONS (NATURAL DIALOGUE)
+       7. SCENE TRANSITIONS, INTERACTIONS & NEGATIVE LENS REACTIONS
        ========================================================================= */
     function enterChapter2Sequence() {
       game.chapter = 2;
       game.flags.ch1Complete = true;
-      sound.playTrainWhistle();
+      sound.playHorn();
       openModal('chapter-card');
-
       setTimeout(() => {
         game.sceneId = 'car_sleeper';
-        game.player.x = 150;
-        sound.setPlatformAmbience(false);
+        game.player.x = 160;
+        sound.setSceneMode(false, false);
         updateHUD();
         closeModal('chapter-card');
-        game.shakeTimer = 1.1;
+        game.shakeTimer = 1.0;
         startDialogue([
           { speaker: 'Loa Phát Thanh', text: '*RÈ... RÈ...* ĐOÀN TÀU ĐÃ DỪNG TẠI SÂN GA SỐ KHÔNG. HÀNH KHÁCH "TRẦN QUỐC PHONG" VUI LÒNG XUỐNG GA...' },
-          { speaker: 'Kiên', text: 'Tiếng phanh rít lạnh cả người... Tàu dừng hẳn rồi. Ngoài kia đặc quánh sương mù, chẳng thấy bóng dáng sân ga bình thường nào cả.' },
-          { speaker: 'Kiên', text: 'Đây là Toa 4 — Toa Giường Nằm. Trước cửa khoang 4B có một bà cụ đang ôm cây đàn violin...' }
+          { speaker: 'Kiên', text: 'Tàu dừng hẳn giữa màn sương mù rồi... Đây là Toa 4 — Toa Giường Nằm. Trước khoang 4B có một bà cụ đang ôm cây đàn violin.' }
         ]);
-      }, 2400);
+      }, 2200);
     }
 
     function transitionToScene(targetId, spawnX) {
@@ -660,40 +1897,37 @@
       game.fade.callback = () => {
         game.sceneId = targetId;
         game.player.x = spawnX;
-        sound.setPlatformAmbience(targetId === 'platform_zero');
+        sound.setSceneMode(false, targetId === 'platform_zero');
         updateHUD();
 
         if (targetId === 'car_coach' && game.flags.stampedTicket && !game.flags.inspectorSpawned) {
           game.flags.inspectorSpawned = true;
-          game.inspectorX = 1265;
-          game.flickerTimer = 2.4; game.shakeTimer = 1.4;
-          sound.playHorrorSwell(); sound.playTrainWhistle();
+          game.shakeTimer = 1.2; game.flickerTimer = 2.0;
+          sound.playHorn(); sound.playHorrorSting();
           setTimeout(() => {
-            sound.playTicketPunch();
             startDialogue([
-              { speaker: 'Hệ Thống', text: 'Đèn toa chớp tắt liên hồi. Một bóng người cao lênh khênh trong bộ đồng phục rách nát bước ra từ đầu toa, chiếc kìm bấm vé kêu TÁCH... TÁCH...' },
-              { speaker: 'Kiên', text: 'Lạnh sống lưng thật... Người Soát Vé đến rồi. Mình phải bước tới đưa tấm vé Ga Đá Trắng cho hắn.' }
+              { speaker: 'Hệ Thống', text: 'Đèn toa chớp tắt liên hồi. Người Soát Vé cao lênh khênh xuất hiện ở cuối toa, tay cầm kìm bấm vé kêu TÁCH... TÁCH...' },
+              { speaker: 'Kiên', text: 'Hắn tới rồi. Mình phải bước lại đưa tấm vé Ga Đá Trắng cho hắn.' }
             ]);
-          }, 700);
+          }, 500);
         }
 
         if (targetId === 'platform_zero' && !game.flags.ch2BanishedPhong) {
-          game.flickerTimer = 1.8;
-          sound.playHorrorSwell();
+          game.flickerTimer = 1.6;
+          sound.playHorrorSting();
           startDialogue([
             { speaker: 'Phong', text: 'Cứu tôi!! Đừng lại gần!! Tôi không cố ý khóa cửa toa đó đâu... tôi chỉ muốn sống thôi mà!!' },
-            { speaker: 'Kiên', text: 'Phong!! Đứng yên đó! Có thứ bóng đen khổng lồ đang trườn ra từ màn sương ngay sau lưng anh kìa!' },
-            { speaker: 'Kiên', text: 'Mình phải giơ Máy Ảnh Kính Nứt [V] lên CHỤP thẳng vào nó ngay!' }
+            { speaker: 'Kiên', text: 'Phong!! Có thứ bóng đen khổng lồ đang trườn ra từ màn sương ngay sau lưng anh kìa! Phải bật Kính Nứt [V] lên CHỤP thẳng vào nó!' }
           ]);
         }
       };
     }
 
-    function interactWithHotspot(h) {
+    function interactHotspot(h) {
       if (!h || game.dialogue.active || game.fade.dir !== 0) return;
       const f = game.flags;
 
-      // --- EXITS ---
+      // Exits
       if (h.id === 'exit_to_car1') return transitionToScene('car_luggage', 1140);
       if (h.id === 'exit_to_car2') return transitionToScene('car_coach', 140);
       if (h.id === 'exit_to_car3') return transitionToScene('car_dining', 140);
@@ -702,281 +1936,200 @@
       if (h.id === 'exit_to_car5_from_6') return transitionToScene('car_mail', 1120);
       if (h.id === 'exit_to_platform') return transitionToScene('platform_zero', 160);
 
-      // --- CHAPTER 1 HOTSPOTS ---
+      // Ch1
       if (h.id === 'seat_14') {
-        startDialogue([{ speaker: 'Kiên', text: 'Ghế gỗ số 14... Mình tỉnh dậy ngay ở đây, đầu đau như búa bổ mà chẳng nhớ nổi một mảnh nào về chuyện đã lên chuyến tàu này lúc nào.' }]);
+        startDialogue([{ speaker: 'Kiên', text: 'Ghế số 14... Mình tỉnh dậy ở đây mà chẳng nhớ nổi đã lên chuyến tàu này lúc nào.' }]);
       } else if (h.id === 'clock_0214') {
-        startDialogue([{
-          speaker: 'Kiên',
-          text: f.sawClockHint
-            ? 'Kim đồng hồ vẫn chết cứng ở 02:14. Dòng chữ cào sau lớp kính nứt bảo con dấu nằm trong "Bụng Quạ Sắt" ở Toa 1...'
-            : 'Cái đồng hồ chết cứng ở đúng 02:14 sáng. Lạ thật, tàu vẫn chạy ầm ầm mà thời gian lại đứng yên.'
-        }]);
+        startDialogue([{ speaker: 'Kiên', text: f.sawClockHint ? 'Kim đồng hồ chết cứng ở 02:14. Dòng chữ cào sau kính nứt chỉ về "Bụng Quạ Sắt" ở Toa 1.' : 'Đồng hồ chết cứng ở 02:14 sáng.' }]);
       } else if (h.id === 'npc_benam') {
         if (!f.metBeNam) {
           f.metBeNam = true;
           startDialogue([
-            { speaker: 'Kiên', text: 'Này cháu bé... Cháu có nghe thấy tiếng gì lạ không?' },
-            { speaker: 'Bé Nấm', text: 'Chú tỉnh rồi à? Chú ngủ lâu lắm rồi đấy... Đừng nhìn ra ngoài cửa sổ nhé, sương mù ngoài kia hay nhìn lại lắm.' },
-            { speaker: 'Kiên', text: 'Cháu biết chuyến tàu này đang chạy về ga nào không? Vé của chú chẳng ghi tên ga nào cả.' },
+            { speaker: 'Kiên', text: 'Này cháu bé... Cháu biết chuyến tàu này đi đâu không? Vé của chú chẳng ghi tên ga nào cả.' },
             { speaker: 'Bé Nấm', text: 'Không có tên ga thì chú Soát Vé không cho chú ngồi đâu. Cái máy ảnh của chú kẹt cò rồi kìa... Bác đầu bếp ở Toa 3 có lọ dầu máy đấy, nhưng bác ấy đang cáu vì hỏng đồng hồ.' }
           ]);
         } else if (!f.fixedCamera) {
-          startDialogue([{ speaker: 'Bé Nấm', text: 'Chú sang Toa 1 bên trái tìm đồ sửa đồng hồ cho bác Tùng đi. Bác ấy cho dầu máy là máy ảnh của chú nhìn thấy được nhiều thứ hay lắm...' }]);
+          startDialogue([{ speaker: 'Bé Nấm', text: 'Chú sang Toa 1 bên trái tìm đồ sửa đồng hồ cho bác Tùng đi. Sửa xong máy ảnh là chú thấy được nhiều thứ lắm...' }]);
         } else {
-          startDialogue([{ speaker: 'Bé Nấm', text: 'Chú sửa xong máy ảnh rồi à? Đừng sợ những thứ chú thấy trong gương kính nứt nhé... chúng chỉ muốn chú nhớ lại thôi.' }]);
+          startDialogue([{ speaker: 'Bé Nấm', text: 'Đừng sợ những thứ chú thấy trong kính nứt nhé... chúng chỉ muốn chú nhớ lại thôi.' }]);
         }
       } else if (h.id === 'npc_soatve') {
         if (hasItem('stamped_ticket')) {
-          sound.playTicketPunch();
+          sound.playClick(760);
           startDialogue([
             { speaker: 'Người Soát Vé', text: 'Vé...' },
             { speaker: 'Kiên', text: 'Đây... Vé của tôi.' },
-            { speaker: 'Người Soát Vé', text: 'Ga Đá Trắng... 02:14. TÁCH! Cuối cùng cậu cũng nhớ ra nơi mình phải xuống rồi.' },
-            { speaker: 'Người Soát Vé', text: 'Cửa sang Toa 4 đã mở. Đừng để các hành khách phía trước phải chờ quá lâu...' }
+            { speaker: 'Người Soát Vé', text: 'Ga Đá Trắng... 02:14. TÁCH! Cuối cùng cậu cũng nhớ ra nơi mình phải xuống rồi. Cửa sang Toa 4 đã mở.' }
           ], () => enterChapter2Sequence());
         }
       } else if (h.id === 'tool_cabinet') {
         if (!f.pickedHairpin) {
-          f.pickedHairpin = true; addItem('hairpin'); showToast('Đã nhặt [Kẹp Tóc]!');
-          startDialogue([{ speaker: 'Kiên', text: 'Một chiếc kẹp tóc thép nằm kẹt trong ngăn kéo rỉ. Độ đàn hồi vẫn còn tốt, biết đâu chế lại làm lò xo hay dây cót được.' }]);
-        } else {
-          startDialogue([{ speaker: 'Kiên', text: 'Trong tủ chỉ còn mấy cái cờ lê rỉ sét với ốc vít gãy.' }]);
-        }
+          f.pickedHairpin = true; addItem('hairpin'); showToast('Đã nhặt [Kẹp Tóc Thép]!');
+          startDialogue([{ speaker: 'Kiên', text: 'Một chiếc kẹp tóc thép nằm kẹt trong ngăn kéo rỉ. Có thể chế lại làm dây cót đồng hồ được.' }]);
+        } else startDialogue([{ speaker: 'Kiên', text: 'Trong tủ chỉ còn mấy cái cờ lê rỉ sét.' }]);
       } else if (h.id === 'crates_pile') {
         if (!f.pickedBrokenWatch) {
           f.pickedBrokenWatch = true; addItem('broken_watch'); showToast('Đã nhặt [Đồng Hồ Hỏng]!');
-          startDialogue([{ speaker: 'Kiên', text: 'Ai đánh rơi chiếc đồng hồ quả quýt ở đây... Mở nắp ra thì thấy gãy mất thanh lò xo bên trong. Thử mở túi đồ [I] ghép với Kẹp Tóc xem.' }]);
-        } else if (f.capturedHands) {
-          startDialogue([{ speaker: 'Kiên', text: 'Tấm ảnh Polaroid in rõ dãy số 2 - 1 - 4. Đúng là mật mã của Rương Quạ Sắt rồi.' }]);
-        } else {
-          startDialogue([{ speaker: 'Kiên', text: f.fixedCamera ? 'Mình thấy lạnh gáy mỗi lần đứng gần đống thùng này... Thử bật Kính Nứt [V] soi và chụp xem.' : 'Toàn thùng gỗ ẩm mốc với vali không chủ.' }]);
-        }
+          startDialogue([{ speaker: 'Kiên', text: 'Một chiếc đồng hồ quả quýt bị gãy lò xo. Mở túi đồ [I] ghép với [Kẹp Tóc Thép] xem sao.' }]);
+        } else startDialogue([{ speaker: 'Kiên', text: f.capturedHands ? 'Ảnh Polaroid ghi rõ mã 2 - 1 - 4 cho Rương Quạ Sắt.' : 'Đống thùng gỗ ẩm mốc. Thử bật Kính Nứt [V] soi & chụp xem.' }]);
       } else if (h.id === 'crow_chest') {
         if (f.openedChest) startDialogue([{ speaker: 'Kiên', text: 'Rương Quạ Sắt trống trơn rồi.' }]);
-        else openPadlockModal();
+        else openPadlock();
       } else if (h.id === 'dining_tables') {
-        startDialogue([{ speaker: 'Kiên', text: 'Khăn trải bàn ố vàng, nến chảy sáp tắt ngúm từ bao giờ. Chẳng có vị khách nào ngồi đây cả.' }]);
+        startDialogue([{ speaker: 'Kiên', text: 'Khăn trải bàn ố vàng, nến tắt ngúm từ bao giờ.' }]);
       } else if (h.id === 'npc_bactung') {
         f.metChef = true;
         if (hasItem('working_watch')) {
           removeItem('working_watch'); f.gaveWatch = true; addItem('oil_bottle');
           showToast('Nhận [Lọ Dầu Máy] từ Bác Bếp Tùng!');
           startDialogue([
-            { speaker: 'Kiên', text: 'Bác Tùng, cháu vừa sửa tạm được chiếc đồng hồ quả quýt này. Vẫn chạy tích tắc đều lắm.' },
-            { speaker: 'Bác Bếp Tùng', text: 'Ồ, khá đấy chú em! May quá, không có đồng hồ tôi chẳng biết nồi súp này hầm bao lâu rồi... Cầm lọ dầu máy này đi, nhỏ vào cò máy ảnh là trơn tru ngay.' },
-            { speaker: 'Bác Bếp Tùng', text: 'À mà này... sửa xong thì đừng có chĩa ống kính lung tung vào quầy bếp của tôi đấy.' }
+            { speaker: 'Bác Bếp Tùng', text: 'Khá đấy chú em! May quá có đồng hồ canh giờ hầm súp. Cầm [Lọ Dầu Máy] này đi, nhỏ vào cò máy ảnh là trơn tru ngay.' },
+            { speaker: 'Bác Bếp Tùng', text: 'Mà sửa xong thì đừng chĩa ống kính vào nồi súp của tôi đấy.' }
           ]);
         } else if (f.gaveWatch) {
-          startDialogue([{ speaker: 'Bác Bếp Tùng', text: 'Làm gì thì làm nhanh lên chú em, tàu đêm nay chạy kỳ quặc lắm... mùi khói khét cứ lởn vởn quanh đây.' }]);
+          startDialogue([{ speaker: 'Bác Bếp Tùng', text: 'Tàu đêm nay chạy kỳ quặc lắm... mùi khói khét cứ lởn vởn quanh đây.' }]);
         } else {
           startDialogue([
-            { speaker: 'Bác Bếp Tùng', text: 'Chú em muốn ăn gì? Súp hành tây nóng hổi đây, mà khoan... cái đồng hồ bếp chết tiệt lại đứng im rồi, canh giờ kiểu gì không biết!' },
-            { speaker: 'Kiên', text: 'Bác ơi, cháu nghe bé Nấm bảo bác có dầu máy bôi trơn...' },
-            { speaker: 'Bác Bếp Tùng', text: 'Dầu máy thì có đấy, nhưng chú kiếm cho tôi cái đồng hồ nào còn chạy được đi rồi tôi đổi cho. Chắc dưới Toa Hành Lý có đồ thất lạc.' }
+            { speaker: 'Bác Bếp Tùng', text: 'Dầu máy thì tôi có, nhưng đồng hồ bếp hỏng rồi! Chú xuống Toa 1 kiếm cho tôi cái đồng hồ nào còn chạy được đi rồi tôi đổi cho.' }
           ]);
         }
       } else if (h.id === 'soup_pot') {
         if (hasItem('dry_stamp') && f.inspectedSoupNegative) {
           removeItem('dry_stamp'); addItem('inked_stamp'); f.inkedStamp = true;
-          showToast('Đã lén chấm mực đen -> Nhận [Con Dấu Có Mực]!', true);
-          startDialogue([
-            { speaker: 'Kiên', text: 'Bác Tùng đang quay lưng... Nhanh tay nhúng Con Dấu vào thứ chất lỏng đen kịt này thôi.' },
-            { speaker: 'Kiên', text: 'Lạnh buốt cả tay... Giờ mở túi đồ [I] ghép [Con Dấu Có Mực] với [Tấm Vé Trống] là xong.' }
-          ]);
+          showToast('Đã chấm mực đen -> Nhận [Con Dấu Có Mực]!', true);
+          startDialogue([{ speaker: 'Kiên', text: 'Bác Tùng đang quay lưng... Nhúng Con Dấu vào thứ chất lỏng đen kịt này rồi mở túi [I] đóng lên Tấm Vé Trống thôi.' }]);
         } else {
-          startDialogue([{ speaker: 'Kiên', text: f.fixedCamera ? 'Bề ngoài trông như nồi súp hành tây, nhưng mùi cứ tanh nồng... Thử bật Kính Nứt [V] soi vào nồi xem sao.' : 'Nồi súp sôi lăn tăn, bốc mùi ngai ngái khó tả.' }]);
+          startDialogue([{ speaker: 'Kiên', text: f.fixedCamera ? 'Nồi súp bốc mùi tanh nồng... Thử bật Kính Nứt [V] soi vào xem sao.' : 'Nồi súp sôi lăn tăn, bốc mùi ngai ngái khó tả.' }]);
         }
       } else if (h.id === 'door_car4') {
         if (f.ch1Complete) transitionToScene('car_sleeper', 150);
-        else {
-          sound.playTicketPunch();
-          startDialogue([{ speaker: 'Hệ Thống', text: 'Cửa nối sang Toa 4 khóa chặt. Phía bên kia vang lên tiếng kìm bấm vé lạnh lẽo...' }]);
-        }
+        else startDialogue([{ speaker: 'Hệ Thống', text: 'Cửa sang Toa 4 khóa chặt. Phía bên kia vang lên tiếng kìm bấm vé lạnh lẽo.' }]);
       }
 
-      // --- CHAPTER 2 HOTSPOTS ---
+      // Ch2
       else if (h.id === 'door_4b') {
-        startDialogue([{ speaker: 'Kiên', text: f.ch2Saw0412 ? 'Qua kính nứt, những cánh tay đen thò ra từ khoang 4B cùng dãy số 04-12 phát sáng... Lạnh sống lưng thật.' : 'Cửa khoang 4B hé mở tối om. Thử bật Kính Nứt [V] soi vào xem có gì bên trong.' }]);
+        startDialogue([{ speaker: 'Kiên', text: f.ch2Saw0412 ? 'Dãy số 04-12 phát sáng trên cửa 4B qua lớp kính nứt...' : 'Cửa khoang 4B hé mở tối om. Thử bật Kính Nứt [V] soi vào xem.' }]);
       } else if (h.id === 'npc_bacam') {
         f.ch2MetBaCam = true;
         if (!f.ch2Saw0412) {
           startDialogue([
-            { speaker: 'Bà Cầm', text: 'Tiếng ray sắt đêm nay nghe giống tiếng tim đập quá, cậu nhỉ... Tàu dừng lại rồi, nghĩa là đến lượt một người nữa phải xuống ga.' },
-            { speaker: 'Kiên', text: 'Bà có biết "Trần Quốc Phong" mà loa vừa gọi là ai không? Cửa sang Toa 5 bị mất điện khóa mất rồi.' },
-            { speaker: 'Bà Cầm', text: 'Mắt tôi không nhìn thấy, nhưng tôi nghe thấy có thứ gì đó đang gõ nhịp trên cửa khoang 4B. Cậu dùng chiếc máy ảnh của cậu soi vào đó đi, rồi quay lại nói tôi biết cậu thấy gì.' }
+            { speaker: 'Bà Cầm', text: 'Tàu dừng lại nghĩa là đến lượt một người nữa phải xuống ga. Tôi nghe thấy có thứ gì đó gõ nhịp trên cửa khoang 4B — cậu dùng máy ảnh soi vào đó rồi nói tôi biết cậu thấy gì.' }
           ]);
         } else if (!f.ch2GotFuse) {
-          f.ch2GotFuse = true;
-          addItem('fuse');
+          f.ch2GotFuse = true; addItem('fuse');
           showToast('Bà Cầm trao cho bạn [Cầu Chì Thủy Tinh]!');
           startDialogue([
-            { speaker: 'Kiên', text: 'Bà Cầm, qua ống kính cháu thấy những nốt nhạc lơ lửng và dãy số 04-12 khắc trên cửa 4B... còn có cả bàn tay đen thò ra nữa.' },
-            { speaker: 'Bà Cầm', text: '04-12... Đúng là nhịp điệu của đêm năm năm trước rồi. Cầm lấy [Cầu Chì Thủy Tinh] này lắp vào Hộp Cầu Chì bên trái đi, điện cửa Toa 5 sẽ có lại.' }
+            { speaker: 'Bà Cầm', text: '04-12... Đúng là nhịp điệu của đêm năm năm trước rồi. Cầm [Cầu Chì Thủy Tinh] này lắp vào Hộp Cầu Chì bên trái đi, cửa Toa 5 sẽ có điện lại.' }
           ]);
         } else {
-          startDialogue([{ speaker: 'Bà Cầm', text: 'Gã Phong đang trốn sau cánh cửa Khoang VIP ở Toa 6. Cậu cẩn thận đấy... có những tội lỗi càng soi đèn vào lại càng cháy dữ dội hơn.' }]);
+          startDialogue([{ speaker: 'Bà Cầm', text: 'Gã Phong đang trốn sau cánh cửa Khoang VIP ở Toa 6. Cẩn thận đấy...' }]);
         }
       } else if (h.id === 'fuse_box') {
-        if (f.ch2FuseFixed) {
-          startDialogue([{ speaker: 'Kiên', text: 'Hộp cầu chì đã có điện lại. Cửa nối sang Toa 5 mở rồi.' }]);
-        } else if (hasItem('fuse')) {
-          removeItem('fuse'); f.ch2FuseFixed = true;
-          sound.playClick(760);
+        if (f.ch2FuseFixed) startDialogue([{ speaker: 'Kiên', text: 'Hộp cầu chì đã có điện lại.' }]);
+        else if (hasItem('fuse')) {
+          removeItem('fuse'); f.ch2FuseFixed = true; sound.playClick(760);
           showToast('TÁCH! Đã lắp cầu chì -> Cửa sang Toa 5 đã có điện!');
-          startDialogue([{ speaker: 'Kiên', text: 'Điện hành lang bật lên rồi. Giờ sang Toa 5 — Toa Bưu Chính xem có manh mối gì về Phong không.' }]);
-        } else {
-          startDialogue([{ speaker: 'Kiên', text: 'Hộp cầu chì cháy đen, thiếu đúng một ống cầu chì thủy tinh. Hỏi Bà Cầm xem bà có giữ cái dự phòng nào không.' }]);
-        }
+        } else startDialogue([{ speaker: 'Kiên', text: 'Thiếu một ống cầu chì thủy tinh. Hỏi Bà Cầm xem.' }]);
       } else if (h.id === 'exit_to_car5') {
         if (f.ch2FuseFixed) transitionToScene('car_mail', 140);
-        else { sound.playClick(160); showToast('Cửa điện sang Toa 5 đang mất nguồn! Hãy sửa Hộp Cầu Chì trước.'); }
+        else showToast('Cửa điện sang Toa 5 đang mất nguồn! Hãy sửa Hộp Cầu Chì trước.');
       } else if (h.id === 'morse_desk') {
         if (!f.ch2GotFilm) {
           f.ch2GotFilm = true; addItem('film_strip');
-          showToast('Đã nhặt [Dải Phim Âm Bản] trên bàn điện báo!');
-          startDialogue([{ speaker: 'Kiên', text: 'Một dải phim âm bản chưa tráng nằm cạnh máy điện báo. Cuối toa có tấm rèm đỏ của Phòng Tối, mang vào tráng thử xem chụp thứ gì.' }]);
-        } else {
-          startDialogue([{ speaker: 'Kiên', text: 'Chiếc máy điện báo cũ thỉnh thoảng tự gõ mấy nhịp tích-tè rời rạc nghe sởn cả gai ốc.' }]);
-        }
+          showToast('Đã nhặt [Dải Phim Âm Bản]!');
+          startDialogue([{ speaker: 'Kiên', text: 'Một dải phim âm bản chưa tráng! Mang vào Phòng Tối sau tấm rèm đỏ cuối toa tráng thử xem.' }]);
+        } else startDialogue([{ speaker: 'Kiên', text: 'Máy điện báo cũ thỉnh thoảng tự gõ mấy nhịp tích-tè lạnh gáy.' }]);
       } else if (h.id === 'evidence_board') {
-        startDialogue([{ speaker: 'Kiên', text: 'Bảng chứng cứ chằng chịt chỉ đỏ nối những tấm ảnh Polaroid mờ nhòe... Sao mình có cảm giác nét chữ trên bảng này quen đến đáng sợ.' }]);
+        startDialogue([{ speaker: 'Kiên', text: 'Bảng chứng cứ chằng chịt chỉ đỏ nối những tấm ảnh Polaroid mờ nhòe.' }]);
       } else if (h.id === 'darkroom_curtain') {
         openDarkroom();
       } else if (h.id === 'exit_to_car6') {
-        if (f.ch2VipUnlocked) {
+        if (f.ch2VipUnlocked) transitionToScene('car_vip', 140);
+        else if (hasItem('vip_key')) {
+          removeItem('vip_key'); f.ch2VipUnlocked = true; sound.playClick(760);
+          showToast('CẠCH! Đã mở khóa Khoang VIP!');
           transitionToScene('car_vip', 140);
-        } else if (hasItem('vip_key')) {
-          removeItem('vip_key'); f.ch2VipUnlocked = true;
-          sound.playTicketPunch();
-          showToast('CẠCH! Đã mở khóa Khoang VIP bằng Chìa Khóa Đồng!');
-          transitionToScene('car_vip', 140);
-        } else {
-          sound.playClick(160);
-          showToast('Cửa Khoang VIP khóa trái từ bên trong! Hãy tráng dải phim trong Phòng Tối ở Toa 5.');
-        }
+        } else showToast('Cửa Khoang VIP khóa trái! Hãy tráng dải phim trong Phòng Tối Toa 5.');
       } else if (h.id === 'vip_briefcase') {
-        startDialogue([{ speaker: 'Kiên', text: f.ch2CapturedVip ? 'Chiếc vali da bật tung khóa, bên trong chỉ còn tro tàn và mùi khói khét lẹt.' : 'Chiếc vali da mà Phong cứ ôm khư khư... Thử bật Kính Nứt [V] soi vào nó xem hắn giấu thứ gì.' }]);
+        startDialogue([{ speaker: 'Kiên', text: f.ch2CapturedVip ? 'Chiếc vali da bật tung, chỉ còn tro tàn.' : 'Chiếc vali da của Phong. Bật Kính Nứt [V] soi & chụp nó xem!' }]);
       } else if (h.id === 'npc_phong_vip') {
         f.ch2MetPhong = true;
         startDialogue([
-          { speaker: 'Phong', text: 'Đứng yên đấy! Cậu là ai? Không phải người của bọn họ chứ?! Đóng cửa lại mau!' },
-          { speaker: 'Kiên', text: 'Bình tĩnh đi! Loa phát thanh vừa gọi tên anh — Trần Quốc Phong. Anh đang giấu thứ gì trong chiếc vali kia?' },
-          { speaker: 'Phong', text: 'Câm miệng! Chỉ là đồ cổ tôi mang theo thôi! Đừng có chĩa cái máy ảnh chết tiệt đó vào tôi!' }
+          { speaker: 'Phong', text: 'Đứng yên đấy! Đừng có chĩa cái máy ảnh chết tiệt đó vào tôi và chiếc vali này!' },
+          { speaker: 'Kiên', text: 'Loa phát thanh vừa gọi tên anh — Trần Quốc Phong. Anh đang giấu chuyện gì?' }
         ]);
       } else if (h.id === 'station_sign') {
-        startDialogue([{ speaker: 'Kiên', text: '"SÂN GA SỐ KHÔNG — GA ĐÁ TRẮNG". Tấm biển rỉ sét y hệt cái tên mình vừa đóng lên vé...' }]);
+        startDialogue([{ speaker: 'Kiên', text: '"SÂN GA SỐ KHÔNG — GA ĐÁ TRẮNG".' }]);
       } else if (h.id === 'npc_phong_platform') {
-        if (f.ch2BanishedPhong) {
-          startDialogue([{ speaker: 'Kiên', text: 'Chỉ còn lại một hình nộm bằng sáp lạnh ngắt ngồi trên ghế gỗ...' }]);
-        } else {
-          startDialogue([
-            { speaker: 'Phong', text: 'Nó đang kéo chân tôi xuống!! Cứu tôi với!!' },
-            { speaker: 'Kiên', text: 'Phải bật Kính Nứt [V] và CHỤP thẳng vào bóng đen sau lưng Phong ngay!' }
-          ]);
-        }
+        startDialogue([{ speaker: 'Phong', text: 'Nó đang kéo chân tôi xuống!! Cứu tôi với!!' }]);
       }
     }
 
-    /* =========================================================================
-       12. NEGATIVE LENS 4:3 (`ctx.clip()`), FIRST-SIGHT HORROR REACTIONS & SHUTTER
-       ========================================================================= */
     function triggerFirstSightReaction(anom) {
       const f = game.flags;
-      if (anom.id === 'anom_clock' && !f.reacted_clock_ghost) {
-        f.reacted_clock_ghost = true;
-        f.sawClockHint = true;
-        game.shakeTimer = 0.85;
-        sound.playHorrorSting();
-        sound.playHeartbeat();
-        toggleLens(false);
+      if (anom.id === 'anom_clock' && !f.reacted_clock) {
+        f.reacted_clock = true; f.sawClockHint = true;
+        game.shakeTimer = 0.8; sound.playHorrorSting(); toggleLens(false);
         startDialogue([
-          { speaker: 'Kiên', text: 'Á—!! Cái quái gì thế kia?! Mấy cái bóng đen mắt trắng đang bám đầy quanh đồng hồ... Chúng đang nhìn chằm chằm vào mình!' },
-          { speaker: 'Kiên', text: 'Bình tĩnh nào Kiên... Lúc bỏ máy ảnh xuống thì chẳng có gì cả. Chỉ có qua cái kính nứt này mới thấy...' },
-          { speaker: 'Kiên', text: 'Khoan đã, trên tường ngay dưới kim 02:14 có dòng chữ cào xước: "HẮN GIẤU CON DẤU... BỤNG QUẠ SẮT - TOA 1". Bụng quạ sắt? Ý là cái rương sắt ở Toa Hành Lý sao?' }
+          { speaker: 'Kiên', text: 'Á—!! Mấy cái bóng đen mắt trắng đang bám đầy quanh đồng hồ 02:14!!' },
+          { speaker: 'Kiên', text: 'Trên tường còn có dòng chữ cào xước: "HẮN GIẤU CON DẤU... BỤNG QUẠ SẮT - TOA 1". Ý là cái rương sắt ở Toa Hành Lý sao?' }
         ]);
-      } else if (anom.id === 'anom_hands' && !f.reacted_hands_ghost) {
-        f.reacted_hands_ghost = true;
-        game.shakeTimer = 0.9;
-        sound.playHorrorSting();
-        sound.playHeartbeat();
-        toggleLens(false);
+      } else if (anom.id === 'anom_hands' && !f.reacted_hands) {
+        f.reacted_hands = true;
+        game.shakeTimer = 0.85; sound.playHorrorSting(); toggleLens(false);
         startDialogue([
-          { speaker: 'Kiên', text: 'Trời đất ơi...!! Cả chục cánh tay xám ngoét đang thò ra từ khe thùng gỗ! Chúng đang vươn về phía cái rương hình con quạ...' },
-          { speaker: 'Kiên', text: 'Dưới sàn chỗ mấy ngón tay chỉ có mấy con số mờ mờ... Mình phải căn chuẩn rồi bấm [SPACE] hoặc Chuột trái chụp một tấm mới soi rõ được!' }
+          { speaker: 'Kiên', text: 'Trời đất ơi...!! Cả chục cánh tay xám ngoét thò ra từ khe thùng gỗ chỉ về phía Rương Quạ Sắt!' },
+          { speaker: 'Kiên', text: 'Dưới sàn có mấy con số mờ mờ... Bật [V] lên rồi bấm [SPACE / Click trái] CHỤP một tấm để soi rõ!' }
         ]);
-      } else if (anom.id === 'anom_soup' && !f.reacted_soup_ghost) {
-        f.reacted_soup_ghost = true;
-        f.inspectedSoupNegative = true;
-        game.shakeTimer = 0.55;
-        sound.playBubbling();
-        sound.playHorrorSwell();
-        toggleLens(false);
+      } else if (anom.id === 'anom_soup' && !f.reacted_soup) {
+        f.reacted_soup = true; f.inspectedSoupNegative = true;
+        game.shakeTimer = 0.55; sound.playHorrorSting(); toggleLens(false);
         startDialogue([
-          { speaker: 'Kiên', text: 'Cái... cái thứ gì đang trào ra khỏi nồi súp vậy?! Không phải súp hành tây... Qua ống kính nó đen đặc như mực tàu, còn có cả bóng đen bò lổm ngổm lên tường!' },
-          { speaker: 'Kiên', text: 'Bác Tùng đứng ngay bên cạnh mà chẳng thấy gì sao? ...Khoan đã, nếu thứ này đặc như mực đen... mình có thể lén nhúng Con Dấu khô mực vào thử.' }
+          { speaker: 'Kiên', text: 'Cái quái gì thế kia?! Qua ống kính, nồi súp hành tây biến thành chất lỏng mực đen đặc trào ra ngoài!' },
+          { speaker: 'Kiên', text: 'Nếu nó đặc như mực... mình có thể lén nhúng Con Dấu khô mực vào thử!' }
         ]);
-      } else if (anom.id === 'anom_sleeper' && !f.reacted_sleeper_ghost) {
-        f.reacted_sleeper_ghost = true;
-        f.ch2Saw0412 = true;
-        game.shakeTimer = 0.8;
-        sound.playHorrorSting();
-        toggleLens(false);
+      } else if (anom.id === 'anom_sleeper' && !f.reacted_sleeper) {
+        f.reacted_sleeper = true; f.ch2Saw0412 = true;
+        game.shakeTimer = 0.75; sound.playHorrorSting(); toggleLens(false);
         startDialogue([
-          { speaker: 'Kiên', text: 'Gì thế kia?! Mấy cánh tay tái nhợt thò ra từ ống gió trần và khe cửa 4B...' },
-          { speaker: 'Kiên', text: 'Ngay trên cánh cửa 4B còn phát sáng dãy số "04-12" lẫn mấy nốt nhạc kỳ dị. Mau quay lại báo cho Bà Cầm biết thôi!' }
+          { speaker: 'Kiên', text: 'Gì thế kia?! Mấy cánh tay tái nhợt thò ra từ khe cửa 4B, trên cửa còn phát sáng dãy số "04-12"! Mau báo cho Bà Cầm biết thôi.' }
         ]);
-      } else if (anom.id === 'anom_mail_curtain' && !f.reacted_mail_ghost) {
-        f.reacted_mail_ghost = true;
-        game.shakeTimer = 0.7;
-        sound.playHorrorSting();
-        toggleLens(false);
+      } else if (anom.id === 'anom_vip' && !f.reacted_vip) {
+        f.reacted_vip = true;
+        game.shakeTimer = 0.85; sound.playHorrorSting(); toggleLens(false);
         startDialogue([
-          { speaker: 'Kiên', text: 'Khốn khiếp...!! Sau tấm rèm đỏ của phòng tối có một bóng đen mắt trắng đang đứng im nhìn chằm chằm vào mình!' },
-          { speaker: 'Kiên', text: 'Hít sâu vào Kiên... Mình vẫn phải bước vào trong đó tráng dải phim.' }
-        ]);
-      } else if (anom.id === 'anom_vip' && !f.reacted_vip_ghost) {
-        f.reacted_vip_ghost = true;
-        game.shakeTimer = 0.85;
-        sound.playHorrorSting();
-        sound.playHeartbeat();
-        toggleLens(false);
-        startDialogue([
-          { speaker: 'Kiên', text: 'Trời ơi...!! Lửa cháy bùng lên khắp cửa sổ dán báo, hàng chục bàn tay đang đập điên cuồng vào mặt kính kêu cứu!' },
-          { speaker: 'Kiên', text: 'Còn khói đen thì rỉ ra từ chính chiếc vali da của Phong... Mình phải bật [V] lên CHỤP thẳng vào dị thường đó để lật mặt hắn!' }
+          { speaker: 'Kiên', text: 'Trời ơi!! Lửa cháy bùng lên khắp cửa sổ dán báo, hàng chục bàn tay đập điên cuồng vào mặt kính! Bật [V] lên CHỤP thẳng vào chiếc vali của Phong ngay!' }
         ]);
       }
     }
 
-    function toggleLens(force = null) {
+    function toggleLens(force) {
       if (!game.lens.unlocked) {
-        showToast('Cò bấm máy ảnh kẹt cứng vì rỉ sét rồi! Hãy tìm dầu máy ở Toa 3 để sửa.');
+        showToast('Cò bấm máy ảnh kẹt cứng vì rỉ sét! Tìm dầu máy ở Toa 3 để sửa.');
         return;
       }
       if (game.dialogue.active) return;
-      const next = force !== null ? force : !game.lens.active;
+      const next = typeof force === 'boolean' ? force : !game.lens.active;
       game.lens.active = next;
       if (!next) {
         sound.setStaticLock(false);
         game.lens.lockedAnomaly = null;
       } else {
-        sound.playClick(700);
+        sound.playClick(680);
         if (!game.flags.seenCameraFirstOpen) {
           game.flags.seenCameraFirstOpen = true;
-          game.shakeTimer = 0.35;
-          sound.playHorrorSwell();
+          game.shakeTimer = 0.35; sound.playHorrorSting();
           setTimeout(() => {
             if (game.lens.active && !game.dialogue.active) {
               toggleLens(false);
               startDialogue([
-                { speaker: 'Kiên', text: 'Khoan đã... Cái ống kính này bị sao thế? Sao mọi thứ qua kính nứt lại biến thành màu phim âm bản lạnh lẽo thế này...' },
-                { speaker: 'Kiên', text: 'Để bấm [V] (hoặc Chuột phải) soi thử lên đồng hồ 02:14 và quanh toa xem có gì ẩn giấu không.' }
+                { speaker: 'Kiên', text: 'Khoan đã... Sao mọi thứ qua ống kính nứt lại biến thành màu phim âm bản lạnh lẽo thế này? Thử bấm [V] soi lên đồng hồ 02:14 xem!' }
               ]);
             }
-          }, 550);
+          }, 500);
         }
       }
-      updateHUD(); renderInventory();
+      updateHUD();
     }
 
     function shootCamera() {
@@ -986,93 +2139,417 @@
       sound.playShutter();
 
       const anom = game.lens.lockedAnomaly;
-      if (!anom) { showToast('Tách! Khung hình trống trơn, không bắt được dị thường nào.'); return; }
+      if (!anom) { showToast('Tách! Không bắt được dị thường nào trong khung ngắm.'); return; }
 
       const firstTime = !game.flags[anom.flag];
       game.flags[anom.flag] = true;
-      sound.playHorrorSwell();
-      game.shakeTimer = 0.55;
+      game.shakeTimer = 0.5;
+      sound.playHorrorSting();
       showToast(anom.toast, true);
 
-      if (anom.photoId && !hasItem(anom.photoId)) {
-        addItem(anom.photoId);
-      }
+      if (anom.photoId && !hasItem(anom.photoId)) addItem(anom.photoId);
 
       if (anom.id === 'anom_hands') {
-        setTimeout(() => { toggleLens(false); openPolaroidModal(ITEM_DB['photo_hands']); }, 450);
-      } else if (anom.id === 'anom_clock' && firstTime) {
         setTimeout(() => {
           toggleLens(false);
-          startDialogue([{ speaker: 'Kiên', text: 'Chụp rõ rồi! Dòng chữ cào ghi: "HẮN GIẤU CON DẤU... BỤNG QUẠ SẮT - TOA 1". Chắc chắn là cái rương ở Toa Hành Lý!' }]);
-        }, 420);
-      } else if (anom.id === 'anom_sleeper' && firstTime) {
-        setTimeout(() => {
-          toggleLens(false);
-          startDialogue([{ speaker: 'Kiên', text: 'Mình đã ghi lại được dãy số 04-12 trên cửa 4B. Quay lại báo cho Bà Cầm thôi.' }]);
+          const it = ITEM_DB['photo_hands'];
+          document.getElementById('polaroid-img-box').textContent = it.polaroidCode;
+          document.getElementById('polaroid-caption').textContent = it.polaroidCaption;
+          openModal('polaroid-modal');
         }, 420);
       } else if (anom.id === 'anom_vip' && firstTime) {
-        addItem('ledger');
-        addItem('child_watch');
+        addItem('ledger'); addItem('child_watch');
         game.flags.ch2PhongFled = true;
         setTimeout(() => {
           toggleLens(false);
           startDialogue([
             { speaker: 'Kiên', text: 'Ngọn lửa 5 năm trước... Chính anh đã khóa trái cửa toa tàu đang cháy để độc chiếm lối thoát!' },
-            { speaker: 'Phong', text: 'KHÔNG!! TẮT CÁI ĐÈN CHỚP ĐÓ ĐI!! TÔI KHÔNG MUỐN NHÌN THẤY CHÚNG NỮA!!' },
-            { speaker: 'Hệ Thống', text: 'Phong hoảng loạn làm rơi [Sổ Nợ Đẫm Máu] cùng [Đồng Hồ Trẻ Em Vỡ], rồi tông tung cửa hông lao thẳng ra Sân Ga Sương Mù!' }
+            { speaker: 'Phong', text: 'KHÔNG!! TẮT CÁI ĐÈN CHỚP ĐÓ ĐI!!' },
+            { speaker: 'Hệ Thống', text: 'Phong làm rơi [Sổ Nợ Đẫm Máu] và [Đồng Hồ Trẻ Em], rồi tông tung cửa lao thẳng ra Sân Ga Sương Mù!' }
           ]);
-        }, 480);
+        }, 450);
       } else if (anom.id === 'anom_platform_phong' && firstTime) {
         setTimeout(() => {
           toggleLens(false);
           game.ended = true;
-          sound.playTrainWhistle();
+          sound.playHorn();
           openModal('ending-modal');
-        }, 650);
+        }, 600);
       }
     }
-// ... existing code ...
-      const scene = SCENES[game.sceneId];
+
+    /* =========================================================================
+       8. RENDERING (1280x720 CANVAS + HAND-DRAWN FALLBACKS + NEGATIVE LENS)
+       ========================================================================= */
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function drawFallbackScene(sc, isNeg) {
+      ctx.fillStyle = isNeg ? '#0d2224' : '#181c1d';
+      ctx.fillRect(0, 0, 1280, 720);
+      // Walls & floor
+      ctx.fillStyle = isNeg ? '#153437' : '#242a2b';
+      ctx.fillRect(0, 110, 1280, 475);
+      ctx.fillStyle = isNeg ? '#091618' : '#121516';
+      ctx.fillRect(0, 585, 1280, 135);
+      // Windows
+      ctx.strokeStyle = '#070808'; ctx.lineWidth = 5;
+      for (let i = 0; i < 3; i++) {
+        ctx.fillStyle = isNeg ? '#1e4246' : '#0b0e11';
+        ctx.fillRect(210 + i * 330, 190, 210, 150);
+        ctx.strokeRect(210 + i * 330, 190, 210, 150);
+      }
+      // Scene label
+      ctx.fillStyle = isNeg ? '#8ef5e8' : '#7b8488';
+      ctx.font = 'bold 20px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(sc.name + (isNeg ? ' [ÂM BẢN]' : ''), 640, 80);
+      if (isNeg) {
+        sc.anomalies.forEach((a) => {
+          ctx.fillStyle = 'rgba(184, 50, 50, 0.35)';
+          ctx.beginPath(); ctx.arc(a.x, a.y, 48, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#e0fff9';
+          ctx.font = 'bold 24px monospace';
+          ctx.fillText(a.id === 'anom_hands' ? '2 - 1 - 4' : (a.id === 'anom_sleeper' ? '04-12' : '02:14'), a.x, a.y + 8);
+        });
+      }
+    }
+
+    function drawSpriteOrFallback(key, x, floorY, height, flip, fallbackLabel, fallbackColor) {
+      const img = ASSETS[key];
+      ctx.save();
+      ctx.translate(x, floorY);
+      if (flip) ctx.scale(-1, 1);
+      if (img) {
+        const iw = img.naturalWidth || img.width;
+        const ih = img.naturalHeight || img.height;
+        const w = (iw / ih) * height;
+        ctx.drawImage(img, -w / 2, -height, w, height);
+      } else {
+        ctx.fillStyle = fallbackColor || '#3c4548';
+        ctx.strokeStyle = '#050606'; ctx.lineWidth = 3;
+        ctx.fillRect(-26, -height, 52, height);
+        ctx.strokeRect(-26, -height, 52, height);
+        ctx.fillStyle = '#e8e2d2';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(fallbackLabel, 0, -height - 8);
+      }
+      ctx.restore();
+    }
+
+    function drawKien(floorY) {
+      const sheet = ASSETS['sprite_kien_sheet'];
+      const x = game.player.x;
+      const flip = game.player.dir < 0;
+      const h = 235;
+      ctx.save();
+      ctx.translate(x, floorY);
+      if (flip) ctx.scale(-1, 1);
+      if (sheet) {
+        const sw = (sheet.naturalWidth || sheet.width) / 4;
+        const sh = sheet.naturalHeight || sheet.height;
+        const frame = Math.floor(game.player.walkFrame) % 4;
+        const w = (sw / sh) * h;
+        ctx.drawImage(sheet, frame * sw, 0, sw, sh, -w / 2, -h, w, h);
+      } else {
+        ctx.fillStyle = '#38413a';
+        ctx.strokeStyle = '#050606'; ctx.lineWidth = 3;
+        ctx.fillRect(-28, -h, 56, h);
+        ctx.strokeRect(-28, -h, 56, h);
+        ctx.fillStyle = '#dfc374';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('KIÊN', 0, -h - 8);
+      }
+      ctx.restore();
+    }
+
+    function drawSceneEntities(sc) {
+      const f = game.flags;
+      if (sc.id === 'car_coach') {
+        drawSpriteOrFallback('sprite_benam', 920, sc.floorY, 155, false, 'BÉ NẤM', '#c8a62a');
+        if (f.inspectorSpawned) {
+          drawSpriteOrFallback('sprite_soatve', 1110, sc.floorY, 265, false, 'SOÁT VÉ', '#1e2528');
+        }
+      } else if (sc.id === 'car_dining') {
+        drawSpriteOrFallback('sprite_bactung', 760, sc.floorY, 225, false, 'BÁC TÙNG', '#8f897d');
+      } else if (sc.id === 'car_sleeper') {
+        drawSpriteOrFallback('sprite_bacam', 820, sc.floorY, 215, false, 'BÀ CẦM', '#4b555a');
+      } else if (sc.id === 'car_vip' && !f.ch2PhongFled) {
+        drawSpriteOrFallback('sprite_phong', 840, sc.floorY, 220, false, 'PHONG', '#2f3d42');
+      } else if (sc.id === 'platform_zero' && !f.ch2BanishedPhong) {
+        drawSpriteOrFallback('sprite_phong', 890, sc.floorY, 220, true, 'PHONG', '#2f3d42');
+      }
+      drawKien(sc.floorY);
+    }
+
+    function drawNegativeLens(sc) {
+      const cx = game.lens.x;
+      const cy = game.lens.y;
+      const lw = 380, lh = 285;
+      const lx = cx - lw / 2, ly = cy - lh / 2;
+
+      // Detect anomaly lock
       let locked = null;
-      scene.anomalies.forEach(a => {
+      sc.anomalies.forEach((a) => {
         if (Math.hypot(cx - a.x, cy - a.y) <= a.radius) locked = a;
       });
       game.lens.lockedAnomaly = locked;
       sound.setStaticLock(Boolean(locked));
 
-      // Trigger First-Sight Horror Reaction on first hover over anomaly
       if (locked && !game.dialogue.active) {
         triggerFirstSightReaction(locked);
         if (!game.lens.active) return;
       }
 
-      ctx.fillStyle = 'rgba(4, 6, 5, 0.56)';
-// ... existing code ...
-          if (startChapter === 1) {
-            startDialogue([
-              { speaker: 'Kiên', text: 'Ư... đầu mình đau như búa bổ. Đây là đâu? Sao mình lại ngồi trên một chuyến tàu xuyên đêm thế này?' },
-              { speaker: 'Kiên', text: 'Chẳng nhớ nổi một mảnh nào... Đồng hồ chết cứng ở 02:14. Trong túi chỉ có tấm vé trắng trơn với chiếc máy ảnh kính nứt kẹt cò.' },
-              { speaker: 'Kiên', text: 'Phía bên phải có một cô bé mặc áo mưa vàng đang ngồi một mình. Lại hỏi thử xem sao.' }
-            ]);
-          } else {
-            startDialogue([
-              { speaker: 'Loa Phát Thanh', text: '*RÈ... RÈ...* ĐOÀN TÀU ĐÃ DỪNG TẠI SÂN GA SỐ KHÔNG. HÀNH KHÁCH "TRẦN QUỐC PHONG" VUI LÒNG XUỐNG GA...' },
-              { speaker: 'Kiên', text: 'Tàu dừng hẳn giữa màn sương mù rồi... Trước khoang 4B có một bà cụ ôm đàn violin. Lại nói chuyện với bà ấy xem.' }
-            ]);
-          }
-        }, 420);
-      }, 260);
+      // Dim outside viewfinder
+      ctx.fillStyle = 'rgba(4, 6, 6, 0.62)';
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Clip 4:3 Negative Layer
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(lx, ly, lw, lh);
+      ctx.clip();
+
+      const negImg = ASSETS[sc.negKey];
+      if (negImg) {
+        ctx.drawImage(negImg, 0, 0, 1280, 720);
+      } else {
+        drawFallbackScene(sc, true);
+      }
+
+      // Platform Zero shadow entity behind Phong
+      if (sc.id === 'platform_zero' && !game.flags.ch2BanishedPhong) {
+        ctx.fillStyle = 'rgba(0,0,0,0.88)';
+        ctx.beginPath(); ctx.ellipse(925, 430, 52, 115, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(912, 385, 5, 0, Math.PI * 2); ctx.arc(938, 385, 5, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Diagonal glass crack overlay
+      ctx.strokeStyle = 'rgba(230, 245, 240, 0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(lx + 40, ly + lh);
+      ctx.lineTo(lx + lw * 0.52, ly + lh * 0.48);
+      ctx.lineTo(lx + lw - 20, ly + 18);
+      ctx.moveTo(lx + lw * 0.52, ly + lh * 0.48);
+      ctx.lineTo(lx + lw * 0.66, ly + lh * 0.68);
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Viewfinder 4:3 red film frame border
+      const pulse = locked ? (0.65 + 0.35 * Math.sin(performance.now() * 0.015)) : 0.85;
+      ctx.strokeStyle = locked ? 'rgba(255, 55, 55, ' + pulse + ')' : 'rgba(184, 50, 50, 0.85)';
+      ctx.lineWidth = locked ? 4 : 3;
+      ctx.strokeRect(lx, ly, lw, lh);
+
+      ctx.fillStyle = '#ff6b6b';
+      ctx.font = 'bold 13px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('4:3  NEG-LENS', lx + 10, ly + 20);
+      ctx.textAlign = 'right';
+      ctx.fillText(locked ? '[LOCKED — CLICK/SPACE CHỤP]' : '[V / CHUỘT PHẢI ĐỂ TẮT]', lx + lw - 10, ly + lh - 10);
     }
 
-    function restartFromChapter(ch) {
+    function renderFrame() {
+      ctx.clearRect(0, 0, 1280, 720);
+      if (!game || !game.started) return;
+
+      const sc = SCENES[game.sceneId];
+      ctx.save();
+      if (game.shakeTimer > 0) {
+        const mag = game.shakeTimer * 10;
+        ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+      }
+
+      const bg = ASSETS[sc.bgKey];
+      if (bg) ctx.drawImage(bg, 0, 0, 1280, 720);
+      else drawFallbackScene(sc, false);
+
+      drawSceneEntities(sc);
+
+      // Hotspot prompt
+      if (game.activeHotspot && !game.dialogue.active && !game.lens.active) {
+        const h = game.activeHotspot;
+        const lbl = typeof h.label === 'function' ? h.label() : h.label;
+        const text = '[E] ' + lbl;
+        ctx.font = 'bold 14px sans-serif';
+        const tw = ctx.measureText(text).width + 20;
+        const bx = Math.max(12, Math.min(1268 - tw, h.x - tw / 2));
+        const by = Math.max(60, h.y - 75);
+        ctx.fillStyle = 'rgba(12, 14, 15, 0.9)';
+        ctx.fillRect(bx, by, tw, 28);
+        ctx.strokeStyle = '#dfc374'; ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx, by, tw, 28);
+        ctx.fillStyle = '#eae4d3';
+        ctx.textAlign = 'center';
+        ctx.fillText(text, bx + tw / 2, by + 19);
+      }
+
+      if (game.lens.active) drawNegativeLens(sc);
+
+      // Flicker & Flash overlays
+      if (game.flickerTimer > 0 && Math.random() < 0.35) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+        ctx.fillRect(0, 0, 1280, 720);
+      }
+      if (game.lens.flashAlpha > 0.01) {
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + game.lens.flashAlpha + ')';
+        ctx.fillRect(0, 0, 1280, 720);
+      }
+      if (game.fade.alpha > 0.01) {
+        ctx.fillStyle = 'rgba(5, 6, 7, ' + game.fade.alpha + ')';
+        ctx.fillRect(0, 0, 1280, 720);
+      }
+
+      ctx.restore();
+    }
+
+    /* =========================================================================
+       9. MAIN GAME LOOP
+       ========================================================================= */
+    let lastTime = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+
+      if (game && game.started) {
+        // Fade transitions
+        if (game.fade.dir === 1) {
+          game.fade.alpha = Math.min(1, game.fade.alpha + dt * 2.8);
+          if (game.fade.alpha >= 1) {
+            if (game.fade.callback) game.fade.callback();
+            game.fade.callback = null;
+            game.fade.dir = -1;
+          }
+        } else if (game.fade.dir === -1) {
+          game.fade.alpha = Math.max(0, game.fade.alpha - dt * 2.8);
+          if (game.fade.alpha <= 0) game.fade.dir = 0;
+        }
+
+        // Timers
+        if (game.shakeTimer > 0) game.shakeTimer = Math.max(0, game.shakeTimer - dt);
+        if (game.flickerTimer > 0) game.flickerTimer = Math.max(0, game.flickerTimer - dt);
+        if (game.lens.cooldown > 0) game.lens.cooldown = Math.max(0, game.lens.cooldown - dt);
+        if (game.lens.flashAlpha > 0) game.lens.flashAlpha = Math.max(0, game.lens.flashAlpha - dt * 2.4);
+
+        // Smooth lens lerp
+        game.lens.x += (game.mouse.x - game.lens.x) * 0.22;
+        game.lens.y += (game.mouse.y - game.lens.y) * 0.22;
+
+        // Dialogue typewriter
+        if (game.dialogue.active) {
+          const cur = game.dialogue.queue[game.dialogue.idx];
+          if (cur && game.dialogue.charIdx < cur.text.length) {
+            game.dialogue.timer += dt;
+            if (game.dialogue.timer >= 0.022) {
+              game.dialogue.timer = 0;
+              game.dialogue.charIdx++;
+              if (game.dialogue.charIdx % 3 === 0) sound.playVoiceBlip(cur.speaker);
+              renderDialogueLine();
+            }
+          }
+        }
+
+        // Darkroom minigame hold
+        if (darkroom.active && darkroom.holding) {
+          darkroom.value = Math.min(100, darkroom.value + dt * 42);
+          document.getElementById('darkroom-fill').style.width = darkroom.value.toFixed(1) + '%';
+          document.getElementById('darkroom-status').textContent = 'ĐANG HIỆN HÌNH... ' + Math.round(darkroom.value) + '%';
+          if (darkroom.value >= 100) finishDarkroomHold();
+        }
+
+        // Player movement
+        const canMove = !game.dialogue.active && !game.invOpen && !darkroom.active && game.fade.dir === 0 && !document.querySelector('.modal-overlay.visible');
+        if (canMove) {
+          let vx = 0;
+          if (game.keys.left) { vx = -270; game.player.dir = -1; }
+          if (game.keys.right) { vx = 270; game.player.dir = 1; }
+          if (vx !== 0) {
+            game.player.x = Math.max(70, Math.min(1210, game.player.x + vx * dt));
+            game.player.walkTimer += dt;
+            if (game.player.walkTimer > 0.14) {
+              game.player.walkTimer = 0;
+              game.player.walkFrame = (game.player.walkFrame + 1) % 4;
+            }
+            game.player.stepTimer += dt;
+            if (game.player.stepTimer > 0.34) {
+              game.player.stepTimer = 0;
+              sound.playFootstep();
+            }
+          } else {
+            game.player.walkFrame = 0;
+          }
+
+          // Nearest hotspot
+          const sc = SCENES[game.sceneId];
+          let nearest = null, bestDist = 115;
+          sc.hotspots.forEach((h) => {
+            if (h.visible && !h.visible()) return;
+            const d = Math.abs(game.player.x - h.x);
+            if (d < bestDist) { bestDist = d; nearest = h; }
+          });
+          game.activeHotspot = nearest;
+        }
+      }
+
+      renderFrame();
+      requestAnimationFrame(loop);
+    }
+
+    /* =========================================================================
+       10. LAUNCH, SETTINGS & INPUT BINDINGS
+       ========================================================================= */
+    async function launchGame(startCh) {
+      sound.init();
+      sound.playClick(600);
+      document.getElementById('title-screen').style.display = 'none';
+      const ls = document.getElementById('loading-screen');
+      ls.style.display = 'flex';
+
+      await preloadAllAssets((done, total) => {
+        const pct = Math.round((done / total) * 100);
+        document.getElementById('loading-bar-fill').style.width = pct + '%';
+        document.getElementById('loading-status').textContent = 'ĐANG NẠP TÀI NGUYÊN... ' + done + '/' + total;
+      });
+
+      setTimeout(() => {
+        ls.style.display = 'none';
+        document.getElementById('hud-top-left').style.display = 'flex';
+        document.getElementById('hud-top-right').style.display = 'flex';
+        game = createInitialState(startCh);
+        game.started = true;
+        sound.setSceneMode(false, false);
+        sound.playHorn();
+        updateHUD();
+        renderInventory();
+
+        if (startCh === 1) {
+          startDialogue([
+            { speaker: 'Kiên', text: 'Ư... đầu mình đau như búa bổ. Đây là đâu? Sao mình lại ngồi trên một chuyến tàu xuyên đêm thế này?' },
+            { speaker: 'Kiên', text: 'Đồng hồ chết cứng ở 02:14. Trong túi chỉ có tấm vé trắng trơn với chiếc máy ảnh kính nứt kẹt cò.' },
+            { speaker: 'Kiên', text: 'Phía bên phải có một cô bé mặc áo mưa vàng. Lại hỏi thử xem sao.' }
+          ]);
+        } else {
+          startDialogue([
+            { speaker: 'Loa Phát Thanh', text: '*RÈ... RÈ...* ĐOÀN TÀU ĐÃ DỪNG TẠI SÂN GA SỐ KHÔNG. HÀNH KHÁCH "TRẦN QUỐC PHONG" VUI LÒNG XUỐNG GA...' },
+            { speaker: 'Kiên', text: 'Tàu dừng hẳn giữa màn sương mù rồi... Trước khoang 4B có một bà cụ ôm đàn violin. Lại nói chuyện với bà ấy xem.' }
+          ]);
+        }
+      }, 250);
+    }
+
+    function restartGame(ch) {
       closeModal('ending-modal');
       game = createInitialState(ch);
       game.started = true;
-      sound.setPlatformAmbience(false);
-      updateHUD();
-      renderInventory();
-      sound.playTrainWhistle();
-      startDialogue([{ speaker: 'Kiên', text: ch === 1 ? 'Lại là tiếng còi tàu rền vang đó... Mình tỉnh dậy trên Ghế 14.' : 'Đoàn tàu vừa phanh kít lại giữa Sân Ga Số Không...' }]);
+      sound.setSceneMode(false, false);
+      updateHUD(); renderInventory();
+      sound.playHorn();
     }
 
     function syncSettingsUI() {
@@ -1083,74 +2560,132 @@
       document.getElementById('val-ambience').textContent = Math.round(s.ambience * 100) + '%';
       document.getElementById('slider-sfx').value = Math.round(s.sfx * 100);
       document.getElementById('val-sfx').textContent = Math.round(s.sfx * 100) + '%';
-      const muteLabel = sound.enabled ? '🔊 ĐANG BẬT TIẾNG' : '🔇 ĐÃ TẮT TIẾNG';
-      document.getElementById('btn-settings-mute').textContent = muteLabel;
+      document.getElementById('btn-settings-mute').textContent = sound.enabled ? '🔊 ĐANG BẬT TIẾNG' : '🔇 ĐÃ TẮT TIẾNG';
       document.getElementById('btn-mute').textContent = sound.enabled ? '🔊' : '🔇';
     }
 
-    function setupInputs() {
-      window.addEventListener('keydown', e => {
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: ((e.clientX - rect.left) / rect.width) * 1280,
+        y: ((e.clientY - rect.top) / rect.height) * 720
+      };
+    }
+
+    function setupEvents() {
+      document.getElementById('btn-start-ch1').onclick = () => launchGame(1);
+      document.getElementById('btn-start-ch2').onclick = () => launchGame(2);
+      document.getElementById('btn-title-settings').onclick = () => { sound.init(); syncSettingsUI(); openModal('settings-modal'); };
+      document.getElementById('btn-settings').onclick = () => { sound.init(); syncSettingsUI(); openModal('settings-modal'); };
+      document.getElementById('btn-inv-toggle').onclick = () => toggleInventory();
+      document.getElementById('hud-cam-btn').onclick = () => toggleLens();
+      document.getElementById('dialogue-box').onclick = () => advanceDialogue();
+
+      const toggleMuteAll = () => { sound.init(); sound.toggleMute(); syncSettingsUI(); };
+      document.getElementById('btn-mute').onclick = toggleMuteAll;
+      document.getElementById('btn-settings-mute').onclick = toggleMuteAll;
+
+      ['master', 'ambience', 'sfx'].forEach((type) => {
+        const el = document.getElementById('slider-' + type);
+        el.oninput = () => {
+          sound.init();
+          const v = parseInt(el.value, 10);
+          sound.setVolume(type, v / 100);
+          document.getElementById('val-' + type).textContent = v + '%';
+        };
+      });
+
+      // Darkroom hold button
+      const drBtn = document.getElementById('btn-darkroom-hold');
+      drBtn.onmousedown = () => { if (darkroom.active) darkroom.holding = true; };
+      drBtn.onmouseup = () => finishDarkroomHold();
+      drBtn.onmouseleave = () => finishDarkroomHold();
+      drBtn.ontouchstart = (e) => { e.preventDefault(); if (darkroom.active) darkroom.holding = true; };
+      drBtn.ontouchend = (e) => { e.preventDefault(); finishDarkroomHold(); };
+
+      // Canvas mouse events
+      canvas.addEventListener('mousemove', (e) => {
+        if (!game) return;
+        const pt = getCanvasCoords(e);
+        game.mouse.x = pt.x; game.mouse.y = pt.y;
+      });
+      canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (game && game.started) toggleLens();
+      });
+      canvas.addEventListener('mousedown', (e) => {
+        if (!game || !game.started || e.button !== 0) return;
+        if (game.dialogue.active) { advanceDialogue(); return; }
+        if (game.lens.active) { shootCamera(); return; }
+        const pt = getCanvasCoords(e);
+        const sc = SCENES[game.sceneId];
+        for (const h of sc.hotspots) {
+          if (h.visible && !h.visible()) continue;
+          if (Math.abs(pt.x - h.x) <= h.w / 2 && Math.abs(pt.y - h.y) <= 105) {
+            interactHotspot(h);
+            return;
+          }
+        }
+      });
+
+      // Keyboard events
+      window.addEventListener('keydown', (e) => {
         const k = e.key.toLowerCase();
         if (darkroom.active) {
           if (k === ' ') { e.preventDefault(); darkroom.holding = true; }
           if (k === 'escape') closeDarkroom();
           return;
         }
-
         if (k === 'escape') {
-          const openSettings = document.getElementById('settings-modal').classList.contains('visible');
-          if (openSettings) { closeModal('settings-modal'); return; }
-          const otherModal = ['notebook-modal', 'polaroid-modal', 'padlock-modal'].find(id => document.getElementById(id).classList.contains('visible'));
-          if (otherModal) { closeModal(otherModal); return; }
+          if (document.getElementById('settings-modal').classList.contains('visible')) { closeModal('settings-modal'); return; }
+          const other = ['padlock-modal', 'polaroid-modal'].find(id => document.getElementById(id).classList.contains('visible'));
+          if (other) { closeModal(other); return; }
           if (game && game.lens.active) { toggleLens(false); return; }
-          if (game && game.started && !game.dialogue.active) {
-            sound.init(); syncSettingsUI(); openModal('settings-modal'); return;
-          }
+          if (game && game.invOpen) { toggleInventory(false); return; }
+          if (game && game.started && !game.dialogue.active) { sound.init(); syncSettingsUI(); openModal('settings-modal'); return; }
         }
-
         if (!game || !game.started) return;
         if (document.querySelector('.modal-overlay.visible')) return;
-
         if (game.dialogue.active) {
           if (k === ' ' || k === 'enter' || k === 'e') { e.preventDefault(); advanceDialogue(); }
           return;
         }
-
         if (k === 'a' || k === 'arrowleft') game.keys.left = true;
         if (k === 'd' || k === 'arrowright') game.keys.right = true;
-        if (k === 'e') interactWithHotspot(game.activeHotspot);
+        if (k === 'e') interactHotspot(game.activeHotspot);
         if (k === 'v') toggleLens();
-        if (k === 'i') toggleInventoryDrawer();
+        if (k === 'i') toggleInventory();
         if (k === ' ') {
           e.preventDefault();
           if (game.lens.active) shootCamera();
-          else if (game.activeHotspot) interactWithHotspot(game.activeHotspot);
+          else if (game.activeHotspot) interactHotspot(game.activeHotspot);
         }
       });
-// ... existing code ...
-      document.getElementById('btn-inv-toggle').onclick = () => toggleInventoryDrawer();
-      document.getElementById('btn-notebook').onclick = () => openNotebook();
-      document.getElementById('btn-settings').onclick = () => { sound.init(); syncSettingsUI(); openModal('settings-modal'); };
-      document.getElementById('btn-title-settings').onclick = () => { sound.init(); syncSettingsUI(); openModal('settings-modal'); };
-      document.getElementById('btn-mute').onclick = () => {
-        sound.init(); sound.toggle(); syncSettingsUI();
-      };
-      document.getElementById('btn-settings-mute').onclick = () => {
-        sound.init(); sound.toggle(); syncSettingsUI();
-      };
 
-      ['master', 'ambience', 'sfx'].forEach(type => {
-        const el = document.getElementById('slider-' + type);
-        el.addEventListener('input', () => {
-          sound.init();
-          const v = parseInt(el.value, 10);
-          sound.setVolume(type, v / 100);
-          document.getElementById('val-' + type).textContent = v + '%';
-        });
+      window.addEventListener('keyup', (e) => {
+        const k = e.key.toLowerCase();
+        if (darkroom.active && k === ' ') { finishDarkroomHold(); return; }
+        if (!game) return;
+        if (k === 'a' || k === 'arrowleft') game.keys.left = false;
+        if (k === 'd' || k === 'arrowright') game.keys.right = false;
       });
 
-      document.getElementById('btn-start-ch1').onclick = () => launchGame(1);
-      document.getElementById('btn-start-ch2').onclick = () => launchGame(2);
+      // Touch buttons
+      const bindTouch = (id, downFn, upFn) => {
+        const el = document.getElementById(id);
+        el.ontouchstart = (e) => { e.preventDefault(); downFn(); };
+        if (upFn) el.ontouchend = (e) => { e.preventDefault(); upFn(); };
+      };
+      bindTouch('touch-left', () => { if (game) game.keys.left = true; }, () => { if (game) game.keys.left = false; });
+      bindTouch('touch-right', () => { if (game) game.keys.right = true; }, () => { if (game) game.keys.right = false; });
+      bindTouch('touch-interact', () => { if (game) { if (game.dialogue.active) advanceDialogue(); else interactHotspot(game.activeHotspot); } });
+      bindTouch('touch-lens', () => { if (game) { if (game.lens.active) shootCamera(); else toggleLens(); } });
+
       syncSettingsUI();
     }
-// ... existing code ...
+
+    setupEvents();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
